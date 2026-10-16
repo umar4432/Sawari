@@ -1,0 +1,56 @@
+name: ride_app
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Google Maps and Location
+  google_maps_flutter: ^2.13.1
+  geolocator: ^14.0.2
+
+  # Firebase
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
+
+  # Directions API
+  http: ^1.5.0
+
+  # Google Login
+  google_sign_in: ^7.2.0
+  flutter_native_splash: ^2.4.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assests/logo.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#000000"
+  image: assests/logo.png
+  android: true
+  ios: false
+  android_12:
+    color: "#000000"
+    image: assests/logo.png
