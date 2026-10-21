@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -2548,6 +2550,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState
     extends State<HomeScreen> {
+  // Paste your Google Places/Routes web-service API key here on your own computer.
+  // Do not share this key publicly. For production, call these APIs through a backend.
+  static const String _googleMapsWebServiceApiKey = 'AIzaSyCIxzBVjq9KscXdWSiLVV9Zt0O4aJtKhns';
+
+  Timer? _placesDebounce;
+  bool _placesLoading = false;
+  bool _pickupFieldActive = false;
+  bool _destinationFieldActive = false;
+  List<Map<String, String>> _placeSuggestions = [];
+  LatLng? _selectedPickupLocation;
+  LatLng? _selectedDestinationLocation;
   String? selectedVehicle;
   final FirebaseAuth auth =
       FirebaseAuth.instance;
@@ -2662,26 +2675,11 @@ class _HomeScreenState
 
       if (mounted) {
         setState(() {
-          markers
-            ..removeWhere(
-              (m) =>
-                  m.markerId.value ==
-                  'my_location',
-            )
-            ..add(
-              Marker(
-                markerId:
-                    const MarkerId(
-                  'my_location',
-                ),
-                position:
-                    currentLocation,
-                infoWindow:
-                    const InfoWindow(
-                  title: 'My Location',
-                ),
-              ),
-            );
+          // Use Google's default blue location dot instead of a custom red marker.
+          // Removing this ID also cleans up any marker left by an older state.
+          markers.removeWhere(
+            (marker) => marker.markerId.value == 'my_location',
+          );
         });
       }
 
@@ -4113,6 +4111,7 @@ class _HomeScreenState
              target: defaultLocation,
              zoom: 13,
            ),
+           // Keep Google's default blue dot visible in startup and route mode.
            myLocationEnabled: true,
            myLocationButtonEnabled: false,
            zoomControlsEnabled: false,
@@ -4195,101 +4194,7 @@ class _HomeScreenState
                              ),
                            ),
                          ),
-                         const SizedBox(
-                           width: 10,
-                         ),
-                         Expanded(
-                           child:
-                               GestureDetector(
-                             onTap:
-                                 _selectRole,
-                             child:
-                                 Container(
-                               padding:
-                                   const EdgeInsets
-                                       .symmetric(
-                                 horizontal:
-                                     15,
-                                 vertical:
-                                     13,
-                               ),
-                               decoration:
-                                   BoxDecoration(
-                                 color:
-                                     Colors.white,
-                                 borderRadius:
-                                     BorderRadius
-                                         .circular(
-                                   14,
-                                 ),
-                                 boxShadow:
-                                     const [
-                                   BoxShadow(
-                                     blurRadius:
-                                         10,
-                                     color: Colors
-                                         .black12,
-                                   ),
-                                 ],
-                               ),
-                               child:
-                                   Row(
-                                 children: [
-                                   CircleAvatar(
-                                     radius:
-                                         20,
-                                     child:
-                                         Icon(
-                                       isDriver
-                                           ? Icons
-                                               .directions_car
-                                           : Icons
-                                               .person,
-                                     ),
-                                   ),
-                                   const SizedBox(
-                                     width:
-                                         10,
-                                   ),
-                                   Expanded(
-                                     child:
-                                         Column(
-                                       crossAxisAlignment:
-                                           CrossAxisAlignment
-                                               .start,
-                                       children: [
-                                         const Text(
-                                           'Ride App',
-                                           style:
-                                               TextStyle(
-                                             fontSize:
-                                                 12,
-                                           ),
-                                         ),
-                                         Text(
-                                           selectedRole,
-                                           style:
-                                               const TextStyle(
-                                             fontSize:
-                                                 17,
-                                             fontWeight:
-                                                 FontWeight
-                                                     .bold,
-                                           ),
-                                         ),
-                                       ],
-                                     ),
-                                   ),
-                                   const Icon(
-                                     Icons
-                                         .keyboard_arrow_down,
-                                   ),
-                                 ],
-                               ),
-                             ),
-                           ),
-                         ),
-                       ],
+                                                ],
                      ),
                    ),
                  ),
@@ -4453,24 +4358,12 @@ class _HomeScreenState
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Type of Ride',
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0x1FB7FF18),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0x44B7FF18)),
-                ),
-                child: const Text('Passenger', style: TextStyle(color: Color(0xFFB7FF18), fontWeight: FontWeight.w800, fontSize: 11)),
-              ),
-            ],
+          const Center(
+            child: Text(
+              'Type of Ride',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -4511,30 +4404,56 @@ class _HomeScreenState
   }
 
   Future<void> _openPassengerRoutePopup() async {
+    _placeSuggestions = [];
+    _pickupFieldActive = false;
+    _destinationFieldActive = false;
     await showModalBottomSheet<void>(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
-      builder: (sheetContext) => SafeArea(child: Container(
-        margin: const EdgeInsets.only(top: 70),
-        padding: EdgeInsets.fromLTRB(18, 10, 18, MediaQuery.of(sheetContext).viewInsets.bottom + 20),
-        decoration: const BoxDecoration(color: Color(0xFF07120F), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-        child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          IconButton(onPressed: () => Navigator.pop(sheetContext), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white)),
-          const Text('Plan your route', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 6), const Text('Choose your pickup and destination.', style: TextStyle(color: Colors.white60, fontSize: 13)),
-          const SizedBox(height: 20),
-          _routePopupField(pickupController, 'From', 'Pickup location', Icons.my_location_rounded),
-          const SizedBox(height: 12), _routePopupField(destinationController, 'To', 'Destination', Icons.location_on_rounded),
-          const SizedBox(height: 18),
-          SizedBox(width: double.infinity, height: 56, child: ElevatedButton.icon(
-            onPressed: () {
-              if (pickupController.text.trim().isEmpty || destinationController.text.trim().isEmpty) { _showMessage('From aur To dono enter karo.'); return; }
-              Navigator.pop(sheetContext); _openPassengerRideNeedPage();
-            },
-            icon: const Icon(Icons.arrow_forward_rounded), label: const Text('Next', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB7FF18), foregroundColor: const Color(0xFF06110D), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-          )),
-        ])),
-      )),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SafeArea(child: Container(
+          margin: const EdgeInsets.only(top: 70),
+          padding: EdgeInsets.fromLTRB(18, 10, 18, MediaQuery.of(sheetContext).viewInsets.bottom + 20),
+          decoration: const BoxDecoration(color: Color(0xFF07120F), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+          child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            IconButton(onPressed: () => Navigator.pop(sheetContext), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white)),
+            const Text('Plan your route', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 6), const Text('Choose your pickup and destination.', style: TextStyle(color: Colors.white60, fontSize: 13)),
+            const SizedBox(height: 20),
+            _routePopupField(pickupController, 'From', 'Pickup location', Icons.my_location_rounded, isPickup: true, setSheetState: setSheetState),
+            if (_pickupFieldActive) _buildPlaceSuggestions(setSheetState),
+            const SizedBox(height: 12),
+            _routePopupField(destinationController, 'To', 'Destination', Icons.location_on_rounded, isPickup: false, setSheetState: setSheetState),
+            if (_destinationFieldActive) _buildPlaceSuggestions(setSheetState),
+            const SizedBox(height: 18),
+            SizedBox(width: double.infinity, height: 56, child: ElevatedButton.icon(
+              onPressed: routeLoading ? null : () async {
+                if (pickupController.text.trim().isEmpty || destinationController.text.trim().isEmpty) {
+                  _showMessage('From aur To dono enter karo.');
+                  return;
+                }
+                if (_selectedPickupLocation == null || _selectedDestinationLocation == null) {
+                  _showMessage('Dono fields ke liye Google suggestions mein se location select karo.');
+                  return;
+                }
+                setSheetState(() => routeLoading = true);
+                final success = await _fetchRouteAndDraw();
+                if (!mounted) return;
+                if (!success) {
+                  setSheetState(() => routeLoading = false);
+                  return;
+                }
+                if (sheetContext.mounted) Navigator.pop(sheetContext);
+                _openPassengerRideNeedPage();
+              },
+              icon: routeLoading
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF06110D)))
+                  : const Icon(Icons.arrow_forward_rounded),
+              label: Text(routeLoading ? 'Finding route...' : 'Next', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB7FF18), foregroundColor: const Color(0xFF06110D), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+            )),
+          ])),
+        )),
+      ),
     );
   }
 
@@ -4542,50 +4461,284 @@ class _HomeScreenState
     TextEditingController controller,
     String label,
     String hint,
-    IconData icon,
-  ) {
+    IconData icon, {
+    required bool isPickup,
+    required StateSetter setSheetState,
+  }) {
     return TextField(
       controller: controller,
       textInputAction: TextInputAction.next,
-      style: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w700,
-      ),
+      onTap: () {
+        setSheetState(() {
+          _pickupFieldActive = isPickup;
+          _destinationFieldActive = !isPickup;
+          _placeSuggestions = [];
+        });
+      },
+      onChanged: (value) {
+        if (isPickup) {
+          _selectedPickupLocation = null;
+        } else {
+          _selectedDestinationLocation = null;
+        }
+        setSheetState(() {
+          _pickupFieldActive = isPickup;
+          _destinationFieldActive = !isPickup;
+        });
+        _schedulePlaceSearch(value, isPickup, setSheetState);
+      },
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        labelStyle: const TextStyle(
-          color: Color(0xFFB7FF18),
-          fontWeight: FontWeight.w700,
-        ),
-        hintStyle: const TextStyle(
-          color: Colors.white38,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: const Color(0xFFB7FF18),
-        ),
+        labelStyle: const TextStyle(color: Color(0xFFB7FF18), fontWeight: FontWeight.w700),
+        hintStyle: const TextStyle(color: Colors.white38),
+        prefixIcon: Icon(icon, color: const Color(0xFFB7FF18)),
         filled: true,
         fillColor: const Color(0xFF10221C),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 18,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: Color(0x335EFF9A),
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(
-            color: Color(0xFFB7FF18),
-            width: 1.5,
-          ),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0x335EFF9A))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: Color(0xFFB7FF18), width: 1.5)),
       ),
     );
+  }
+
+  void _schedulePlaceSearch(String input, bool isPickup, StateSetter setSheetState) {
+    _placesDebounce?.cancel();
+    if (input.trim().length < 3) {
+      setSheetState(() {
+        _placeSuggestions = [];
+        _placesLoading = false;
+      });
+      return;
+    }
+    _placesDebounce = Timer(const Duration(milliseconds: 350), () {
+      _fetchPlaceSuggestions(input.trim(), isPickup, setSheetState);
+    });
+  }
+
+  Future<void> _fetchPlaceSuggestions(String input, bool isPickup, StateSetter setSheetState) async {
+    if (_googleMapsWebServiceApiKey == 'PASTE_YOUR_API_KEY_HERE') {
+      _showMessage('main.dart mein Google Places/Routes API key set karo.');
+      return;
+    }
+    setSheetState(() => _placesLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('https://places.googleapis.com/v1/places:autocomplete'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': _googleMapsWebServiceApiKey,
+          'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text.text',
+        },
+        body: jsonEncode({'input': input, 'includedRegionCodes': ['pk'], 'languageCode': 'en'}),
+      );
+      if (response.statusCode != 200) {
+        debugPrint('Places API error ${response.statusCode}: ${response.body}');
+        if (mounted) _showMessage('Places search fail hui. API key, billing aur API restrictions check karo.');
+        setSheetState(() => _placesLoading = false);
+        return;
+      }
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final suggestions = (decoded['suggestions'] as List? ?? []).map<Map<String, String>?>((item) {
+        final prediction = item['placePrediction'];
+        if (prediction is! Map) return null;
+        final id = prediction['placeId']?.toString();
+        final description = (prediction['text'] as Map?)?['text']?.toString();
+        if (id == null || description == null) return null;
+        return {'placeId': id, 'description': description};
+      }).whereType<Map<String, String>>().toList();
+      setSheetState(() {
+        _placeSuggestions = suggestions;
+        _placesLoading = false;
+        _pickupFieldActive = isPickup;
+        _destinationFieldActive = !isPickup;
+      });
+    } catch (error) {
+      debugPrint('Places search exception: $error');
+      setSheetState(() => _placesLoading = false);
+      if (mounted) _showMessage('Places search ke liye internet connection check karo.');
+    }
+  }
+
+  Widget _buildPlaceSuggestions(StateSetter setSheetState) {
+    if (_placesLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 12),
+        child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFB7FF18)))),
+      );
+    }
+    if (_placeSuggestions.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      decoration: BoxDecoration(color: const Color(0xFF10221C), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0x335EFF9A))),
+      child: Column(
+        children: _placeSuggestions.map((place) => ListTile(
+          dense: true,
+          leading: const Icon(Icons.location_on_outlined, color: Color(0xFFB7FF18)),
+          title: Text(place['description'] ?? '', style: const TextStyle(color: Colors.white, fontSize: 13)),
+          onTap: () async {
+            final isPickup = _pickupFieldActive;
+            final controller = isPickup ? pickupController : destinationController;
+            controller.text = place['description'] ?? '';
+            FocusManager.instance.primaryFocus?.unfocus();
+            setSheetState(() {
+              _placeSuggestions = [];
+              _pickupFieldActive = false;
+              _destinationFieldActive = false;
+              _placesLoading = true;
+            });
+            final location = await _fetchPlaceLocation(place['placeId'] ?? '');
+            if (!mounted) return;
+            setSheetState(() => _placesLoading = false);
+            if (location == null) {
+              _showMessage('Selected location ke coordinates nahi milay. Dobara select karo.');
+              return;
+            }
+            setState(() {
+              if (isPickup) {
+                _selectedPickupLocation = location;
+              } else {
+                _selectedDestinationLocation = location;
+              }
+            });
+          },
+        )).toList(),
+      ),
+    );
+  }
+
+  Future<LatLng?> _fetchPlaceLocation(String placeId) async {
+    if (placeId.isEmpty) return null;
+    try {
+      final uri = Uri.parse('https://places.googleapis.com/v1/places/$placeId').replace(queryParameters: {'fields': 'location'});
+      final response = await http.get(uri, headers: {
+        'X-Goog-Api-Key': _googleMapsWebServiceApiKey,
+        'X-Goog-FieldMask': 'location',
+      });
+      if (response.statusCode != 200) {
+        debugPrint('Place details error ${response.statusCode}: ${response.body}');
+        return null;
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final location = data['location'] as Map<String, dynamic>?;
+      final lat = (location?['latitude'] as num?)?.toDouble();
+      final lng = (location?['longitude'] as num?)?.toDouble();
+      if (lat == null || lng == null) return null;
+      return LatLng(lat, lng);
+    } catch (error) {
+      debugPrint('Place details exception: $error');
+      return null;
+    }
+  }
+
+  Future<bool> _fetchRouteAndDraw() async {
+    final origin = _selectedPickupLocation;
+    final destination = _selectedDestinationLocation;
+    if (origin == null || destination == null) return false;
+    if (_googleMapsWebServiceApiKey == 'PASTE_YOUR_API_KEY_HERE') {
+      _showMessage('main.dart mein Google Places/Routes API key set karo.');
+      return false;
+    }
+    try {
+      final response = await http.post(
+        Uri.parse('https://routes.googleapis.com/directions/v2:computeRoutes'),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': _googleMapsWebServiceApiKey,
+          'X-Goog-FieldMask': 'routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline',
+        },
+        body: jsonEncode({
+          'origin': {'location': {'latLng': {'latitude': origin.latitude, 'longitude': origin.longitude}}},
+          'destination': {'location': {'latLng': {'latitude': destination.latitude, 'longitude': destination.longitude}}},
+          'travelMode': 'DRIVE',
+          'routingPreference': 'TRAFFIC_AWARE',
+          'computeAlternativeRoutes': false,
+          'languageCode': 'en',
+          'units': 'METRIC',
+        }),
+      );
+      if (response.statusCode != 200) {
+        debugPrint('Routes API error ${response.statusCode}: ${response.body}');
+        _showMessage('Route nahi mila. Routes API, billing aur API key restrictions check karo.');
+        return false;
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final routes = data['routes'] as List? ?? [];
+      if (routes.isEmpty) {
+        _showMessage('In locations ke darmiyan driving route nahi mila.');
+        return false;
+      }
+      final route = routes.first as Map<String, dynamic>;
+      final encoded = ((route['polyline'] as Map?)?['encodedPolyline'])?.toString();
+      if (encoded == null || encoded.isEmpty) {
+        _showMessage('Google route response mein map line nahi mili.');
+        return false;
+      }
+      final points = _decodeGooglePolyline(encoded);
+      if (points.isEmpty) return false;
+      setState(() {
+        // Route mode must contain only the pickup and destination custom markers.
+        // Google's default blue location dot is separate from this markers set.
+        markers.clear();
+        markers.add(Marker(markerId: const MarkerId('sawari_pickup'), position: origin, infoWindow: InfoWindow(title: 'Pickup', snippet: pickupController.text)));
+        markers.add(Marker(markerId: const MarkerId('sawari_destination'), position: destination, infoWindow: InfoWindow(title: 'Destination', snippet: destinationController.text)));
+        polylines.removeWhere((line) => line.polylineId.value == 'sawari_route');
+        polylines.add(Polyline(polylineId: const PolylineId('sawari_route'), points: points, color: const Color(0xFFB7FF18), width: 6, geodesic: true));
+      });
+      if (points.length >= 2 && mapController != null) {
+        var minLat = points.first.latitude, maxLat = points.first.latitude;
+        var minLng = points.first.longitude, maxLng = points.first.longitude;
+        for (final point in points.skip(1)) {
+          if (point.latitude < minLat) minLat = point.latitude;
+          if (point.latitude > maxLat) maxLat = point.latitude;
+          if (point.longitude < minLng) minLng = point.longitude;
+          if (point.longitude > maxLng) maxLng = point.longitude;
+        }
+        await mapController!.animateCamera(CameraUpdate.newLatLngBounds(
+          LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 70,
+        ));
+      }
+      final distanceMeters = (route['distanceMeters'] as num?)?.toDouble();
+      final duration = route['duration']?.toString() ?? '';
+      final seconds = int.tryParse(duration.replaceAll('s', ''));
+      final distanceText = distanceMeters == null ? '' : distanceMeters >= 1000 ? '${(distanceMeters / 1000).toStringAsFixed(1)} km' : '${distanceMeters.round()} m';
+      final timeText = seconds == null ? '' : seconds >= 3600 ? '${seconds ~/ 3600} hr ${(seconds % 3600) ~/ 60} min' : '${(seconds / 60).ceil()} min';
+      _showMessage('Route ready${distanceText.isNotEmpty ? ' • $distanceText' : ''}${timeText.isNotEmpty ? ' • $timeText' : ''}');
+      return true;
+    } catch (error) {
+      debugPrint('Route request exception: $error');
+      _showMessage('Route request fail hui. Internet aur API settings check karo.');
+      return false;
+    }
+  }
+
+  List<LatLng> _decodeGooglePolyline(String encoded) {
+    final points = <LatLng>[];
+    var index = 0;
+    var latitude = 0;
+    var longitude = 0;
+    while (index < encoded.length) {
+      var result = 0;
+      var shift = 0;
+      int value;
+      do {
+        value = encoded.codeUnitAt(index++) - 63;
+        result |= (value & 0x1f) << shift;
+        shift += 5;
+      } while (value >= 0x20 && index < encoded.length);
+      latitude += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      result = 0;
+      shift = 0;
+      do {
+        value = encoded.codeUnitAt(index++) - 63;
+        result |= (value & 0x1f) << shift;
+        shift += 5;
+      } while (value >= 0x20 && index < encoded.length);
+      longitude += (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      points.add(LatLng(latitude / 1e5, longitude / 1e5));
+    }
+    return points;
   }
 
   Future<void> _openPassengerRideNeedPage() async {
@@ -5134,114 +5287,108 @@ class _HomeScreenState
             child: SafeArea(
               child: SizedBox(
                 width: MediaQuery.of(context).size.width * 0.82,
-                height: double.infinity,
+                height: MediaQuery.of(context).size.height,
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 18),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFB7FF18),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: const Icon(
-                              Icons.person_rounded,
-                              color: Colors.black,
-                            ),
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB7FF18),
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          title: Text(
-                            user?.displayName ?? 'Ride User',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          subtitle: Text(
-                            user?.email ?? user?.phoneNumber ?? '',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                            ),
-                          ),
+                          child: const Icon(Icons.person_rounded, color: Colors.black),
                         ),
-
-                        const Divider(
-                          color: Colors.white12,
+                        title: Text(
+                          user?.displayName ?? 'Ride User',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
                         ),
-
-
-
-                        _menuTile(
-                          dialogContext,
-                          Icons.history_rounded,
-                          'Ride History',
-                          'View your previous rides',
-                          () {
-                            Navigator.pop(dialogContext);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const RideHistoryScreen(),
+                        subtitle: Text(
+                          user?.email ?? user?.phoneNumber ?? '',
+                          style: const TextStyle(color: Colors.white54),
+                        ),
+                      ),
+                      const Divider(color: Colors.white12),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _menuTile(
+                                dialogContext,
+                                Icons.history_rounded,
+                                'Ride History',
+                                'View your previous rides',
+                                () {
+                                  Navigator.pop(dialogContext);
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const RideHistoryScreen()));
+                                },
                               ),
-                            );
-                          },
-                        ),
-
-                        if (isPassenger)
-                          _menuTile(
-                            dialogContext,
-                            Icons.star_rounded,
-                            'Rate Your Ride',
-                            'Share your experience',
-                            () {
-                              Navigator.pop(dialogContext);
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const RatingScreen(),
+                              if (isPassenger)
+                                _menuTile(
+                                  dialogContext,
+                                  Icons.star_rounded,
+                                  'Rate Your Ride',
+                                  'Share your experience',
+                                  () {
+                                    Navigator.pop(dialogContext);
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const RatingScreen()));
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-
-                        _menuTile(
-                          dialogContext,
-                          Icons.settings_rounded,
-                          'Settings',
-                          'Account and app preferences',
-                          () {
-                            Navigator.pop(dialogContext);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    const SettingsScreen(),
+                              _menuTile(
+                                dialogContext,
+                                Icons.settings_rounded,
+                                'Settings',
+                                'Account and app preferences',
+                                () {
+                                  Navigator.pop(dialogContext);
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                                },
                               ),
-                            );
-                          },
+                              _menuTile(
+                                dialogContext,
+                                Icons.logout_rounded,
+                                'Logout',
+                                'Sign out of this account',
+                                () async {
+                                  Navigator.pop(dialogContext);
+                                  await auth.signOut();
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-
-                        // Passenger / Driver switch remains ONLY in menu
-
-
-                        _menuTile(
-                          dialogContext,
-                          Icons.logout_rounded,
-                          'Logout',
-                          'Sign out of this account',
-                          () async {
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
                             Navigator.pop(dialogContext);
-                            await auth.signOut();
+                            if (isPassenger) {
+                              _openDriverMode();
+                            } else {
+                              setState(() {
+                                selectedRole = 'Passenger';
+                                selectedVehicle = null;
+                                driverOnline = false;
+                              });
+                            }
                           },
+                          icon: Icon(isPassenger ? Icons.directions_car_rounded : Icons.person_rounded),
+                          label: Text(isPassenger ? 'Switch to Driver Mode' : 'Switch to Passenger Mode'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFB7FF18),
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -5249,26 +5396,12 @@ class _HomeScreenState
           ),
         );
       },
-      transitionBuilder: (
-        context,
-        animation,
-        secondaryAnimation,
-        child,
-      ) {
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
         final slideAnimation = Tween<Offset>(
           begin: const Offset(-1, 0),
           end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-
-        return SlideTransition(
-          position: slideAnimation,
-          child: child,
-        );
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        return SlideTransition(position: slideAnimation, child: child);
       },
     );
   }
@@ -5289,6 +5422,7 @@ class _HomeScreenState
 
   @override
   void dispose() {
+    _placesDebounce?.cancel();
     pickupController.dispose();
     destinationController.dispose();
     fareController.dispose();

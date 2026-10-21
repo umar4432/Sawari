@@ -24,7 +24,7 @@ dependencies:
   cloud_firestore: ^6.9.0
 
   # Directions API
-  http: ^1.5.0
+  http: ^1.6.0
 
   # Google Login
   google_sign_in: ^7.2.0
