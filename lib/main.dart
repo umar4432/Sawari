@@ -316,9 +316,9 @@ class _LoginScreenState extends State<LoginScreen> {
         _message(_firebaseError(e));
       },
       codeSent: (
-        String verificationId,
-        int? resendToken,
-      ) {
+          String verificationId,
+          int? resendToken,
+          ) {
         if (!mounted) return;
 
         Navigator.push(
@@ -346,13 +346,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await googleSignIn.initialize();
 
       final GoogleSignInAccount googleUser =
-          await googleSignIn.authenticate();
+      await googleSignIn.authenticate();
 
       final GoogleSignInAuthentication googleAuth =
           googleUser.authentication;
 
       final credential =
-          GoogleAuthProvider.credential(
+      GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
 
@@ -383,7 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
               user: user,
               googleEmail: user.email ?? '',
               googleName:
-                  user.displayName ?? '',
+              user.displayName ?? '',
             ),
           ),
         );
@@ -410,31 +410,31 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => loading = false);
     }
   }
-String _firebaseError(
-  FirebaseAuthException e,
-) {
-  switch (e.code) {
-    case 'invalid-email':
-      return 'Invalid email address.';
-    case 'user-not-found':
-      return 'This account was not found.';
-    case 'wrong-password':
-      return 'Incorrect password.';
-    case 'invalid-credential':
-      return 'Incorrect email or password.';
-    case 'email-already-in-use':
-      return 'This email is already registered.';
-    case 'weak-password':
-      return 'Password is too weak.';
-    case 'invalid-phone-number':
-      return 'Invalid phone number.';
-    case 'network-request-failed':
-      return 'Please check your internet connection.';
-    default:
-      return e.message ??
-          'Authentication error.';
+  String _firebaseError(
+      FirebaseAuthException e,
+      ) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'Invalid email address.';
+      case 'user-not-found':
+        return 'This account was not found.';
+      case 'wrong-password':
+        return 'Incorrect password.';
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'weak-password':
+        return 'Password is too weak.';
+      case 'invalid-phone-number':
+        return 'Invalid phone number.';
+      case 'network-request-failed':
+        return 'Please check your internet connection.';
+      default:
+        return e.message ??
+            'Authentication error.';
+    }
   }
-}
 
   void _message(String text) {
     if (!mounted) return;
@@ -465,7 +465,7 @@ String _firebaseError(
           child: Center(
             child: SingleChildScrollView(
               padding:
-                  const EdgeInsets.symmetric(
+              const EdgeInsets.symmetric(
                 horizontal: 24,
                 vertical: 30,
               ),
@@ -479,7 +479,7 @@ String _firebaseError(
                         0xFFE2F7EA,
                       ),
                       borderRadius:
-                          BorderRadius.circular(
+                      BorderRadius.circular(
                         26,
                       ),
                     ),
@@ -500,59 +500,59 @@ String _firebaseError(
                     style: TextStyle(
                       fontSize: 29,
                       fontWeight:
-                          FontWeight.w900,
+                      FontWeight.w900,
                     ),
                   ),
 
-                 const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                 const Text(
-                   'Your ride, your priority.\n'
-                   'Safe, simple and convenient rides '
-                   'for you.',
-                   textAlign: TextAlign.center,
-                   style: TextStyle(
-                     fontSize: 15,
-                     height: 1.5,
-                     color: Colors.black54,
-                   ),
-                 ),
+                  const Text(
+                    'Your ride, your priority.\n'
+                        'Safe, simple and convenient rides '
+                        'for you.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: Colors.black54,
+                    ),
+                  ),
 
                   const SizedBox(height: 32),
 
                   if (!phoneLoginMode) ...[
                     _inputField(
                       controller:
-                          emailController,
+                      emailController,
                       label: 'Email',
                       hint: 'Enter your email',
                       icon: Icons.email_outlined,
                       keyboardType:
-                          TextInputType.emailAddress,
+                      TextInputType.emailAddress,
                     ),
 
                     const SizedBox(height: 14),
 
                     _inputField(
                       controller:
-                          passwordController,
+                      passwordController,
                       label: 'Password',
                       hint: 'Enter your password',
                       icon: Icons.lock_outline,
                       obscureText:
-                          hidePassword,
+                      hidePassword,
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
                             hidePassword =
-                                !hidePassword;
+                            !hidePassword;
                           });
                         },
                         icon: Icon(
                           hidePassword
                               ? Icons.visibility_outlined
                               : Icons
-                                  .visibility_off_outlined,
+                              .visibility_off_outlined,
                         ),
                       ),
                     ),
@@ -564,7 +564,7 @@ String _firebaseError(
                       icon: Icons.login_rounded,
                       loading: loading,
                       onPressed:
-                          _emailLogin,
+                      _emailLogin,
                     ),
 
                     const SizedBox(height: 12),
@@ -573,9 +573,9 @@ String _firebaseError(
                       text: 'Continue with Google',
                       icon: Icons.g_mobiledata,
                       onPressed:
-                          loading
-                              ? null
-                              : _googleLogin,
+                      loading
+                          ? null
+                          : _googleLogin,
                     ),
 
                     const SizedBox(height: 12),
@@ -583,33 +583,33 @@ String _firebaseError(
                     _outlineButton(
                       text: 'Login with Phone',
                       icon:
-                          Icons.phone_android,
+                      Icons.phone_android,
                       onPressed:
-                          loading
-                              ? null
-                              : () {
-                                  setState(() {
-                                    phoneLoginMode =
-                                        true;
-                                  });
-                                },
+                      loading
+                          ? null
+                          : () {
+                        setState(() {
+                          phoneLoginMode =
+                          true;
+                        });
+                      },
                     ),
                   ] else ...[
                     Align(
                       alignment:
-                          Alignment.centerLeft,
+                      Alignment.centerLeft,
                       child: TextButton.icon(
                         onPressed: () {
                           setState(() {
                             phoneLoginMode =
-                                false;
+                            false;
                           });
                         },
                         icon: const Icon(
                           Icons.arrow_back,
                         ),
                         label:
-                            const Text('Back'),
+                        const Text('Back'),
                       ),
                     ),
 
@@ -617,13 +617,13 @@ String _firebaseError(
 
                     _inputField(
                       controller:
-                          phoneController,
+                      phoneController,
                       label: 'Phone Number',
                       hint: '+92 300 1234567',
                       icon:
-                          Icons.phone_outlined,
+                      Icons.phone_outlined,
                       keyboardType:
-                          TextInputType.phone,
+                      TextInputType.phone,
                     ),
 
                     const SizedBox(height: 18),
@@ -631,24 +631,24 @@ String _firebaseError(
                     _mainButton(
                       text: 'Send OTP',
                       icon:
-                          Icons.sms_outlined,
+                      Icons.sms_outlined,
                       loading: loading,
                       onPressed:
-                          _phoneLogin,
+                      _phoneLogin,
                     ),
 
-                   const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                   const Text(
-                     'Phone number login is optional.\n'
-                     'You can also log in with Email/Password or Google.',
-                     textAlign:
-                         TextAlign.center,
-                     style: TextStyle(
-                       color:
-                           Colors.black54,
-                       height: 1.4,
-                     ),
+                    const Text(
+                      'Phone number login is optional.\n'
+                          'You can also log in with Email/Password or Google.',
+                      textAlign:
+                      TextAlign.center,
+                      style: TextStyle(
+                        color:
+                        Colors.black54,
+                        height: 1.4,
+                      ),
                     ),
                   ],
 
@@ -658,22 +658,22 @@ String _firebaseError(
                     children: [
                       Expanded(
                         child:
-                            Divider(
+                        Divider(
                           color: Colors
                               .grey.shade300,
                         ),
                       ),
                       const Padding(
                         padding:
-                            EdgeInsets.symmetric(
+                        EdgeInsets.symmetric(
                           horizontal: 12,
                         ),
                         child:
-                            Text('OR'),
+                        Text('OR'),
                       ),
                       Expanded(
                         child:
-                            Divider(
+                        Divider(
                           color: Colors
                               .grey.shade300,
                         ),
@@ -689,7 +689,7 @@ String _firebaseError(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              const PassengerRegistrationScreen(),
+                          const PassengerRegistrationScreen(),
                         ),
                       );
                     },
@@ -697,7 +697,7 @@ String _firebaseError(
                       'New Passenger? Create Account',
                       style: TextStyle(
                         fontWeight:
-                            FontWeight.bold,
+                        FontWeight.bold,
                         color: Color(
                           0xFF0F9D58,
                         ),
@@ -715,7 +715,7 @@ String _firebaseError(
 
   Widget _inputField({
     required TextEditingController
-        controller,
+    controller,
     required String label,
     required String hint,
     required IconData icon,
@@ -735,31 +735,31 @@ String _firebaseError(
         filled: true,
         fillColor: Colors.white,
         contentPadding:
-            const EdgeInsets.symmetric(
+        const EdgeInsets.symmetric(
           vertical: 18,
           horizontal: 16,
         ),
         border: OutlineInputBorder(
           borderRadius:
-              BorderRadius.circular(16),
+          BorderRadius.circular(16),
           borderSide: BorderSide(
             color: Colors.grey.shade200,
           ),
         ),
         enabledBorder:
-            OutlineInputBorder(
+        OutlineInputBorder(
           borderRadius:
-              BorderRadius.circular(16),
+          BorderRadius.circular(16),
           borderSide: BorderSide(
             color: Colors.grey.shade200,
           ),
         ),
         focusedBorder:
-            OutlineInputBorder(
+        OutlineInputBorder(
           borderRadius:
-              BorderRadius.circular(16),
+          BorderRadius.circular(16),
           borderSide:
-              const BorderSide(
+          const BorderSide(
             color: Color(0xFF0F9D58),
             width: 2,
           ),
@@ -781,32 +781,32 @@ String _firebaseError(
         onPressed: onPressed,
         icon: loading
             ? const SizedBox(
-                width: 20,
-                height: 20,
-                child:
-                    CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+          width: 20,
+          height: 20,
+          child:
+          CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white,
+          ),
+        )
             : Icon(icon),
         label: Text(
           loading ? 'Please wait...' : text,
           style: const TextStyle(
             fontSize: 17,
             fontWeight:
-                FontWeight.bold,
+            FontWeight.bold,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor:
-              const Color(0xFF0F9D58),
+          const Color(0xFF0F9D58),
           foregroundColor:
-              Colors.white,
+          Colors.white,
           shape:
-              RoundedRectangleBorder(
+          RoundedRectangleBorder(
             borderRadius:
-                BorderRadius.circular(16),
+            BorderRadius.circular(16),
           ),
         ),
       ),
@@ -828,19 +828,19 @@ String _firebaseError(
           text,
           style: const TextStyle(
             fontWeight:
-                FontWeight.bold,
+            FontWeight.bold,
           ),
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor:
-              Colors.black87,
+          Colors.black87,
           side: BorderSide(
             color: Colors.grey.shade300,
           ),
           shape:
-              RoundedRectangleBorder(
+          RoundedRectangleBorder(
             borderRadius:
-                BorderRadius.circular(16),
+            BorderRadius.circular(16),
           ),
         ),
       ),
@@ -878,13 +878,13 @@ class PhoneOtpScreen extends StatefulWidget {
 class _PhoneOtpScreenState
     extends State<PhoneOtpScreen> {
   final otpController =
-      TextEditingController();
+  TextEditingController();
 
   bool loading = false;
 
   Future<void> _verifyOtp() async {
     final otp =
-        otpController.text.trim();
+    otpController.text.trim();
 
     if (otp.length < 6) {
       _message(
@@ -897,15 +897,15 @@ class _PhoneOtpScreenState
 
     try {
       final credential =
-          PhoneAuthProvider.credential(
+      PhoneAuthProvider.credential(
         verificationId:
-            widget.verificationId,
+        widget.verificationId,
         smsCode: otp,
       );
 
       final result =
-          await FirebaseAuth.instance
-              .signInWithCredential(
+      await FirebaseAuth.instance
+          .signInWithCredential(
         credential,
       );
 
@@ -913,24 +913,24 @@ class _PhoneOtpScreenState
 
       if (user != null) {
         final userRef =
-            FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid);
+        FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid);
 
         final doc =
-            await userRef.get();
+        await userRef.get();
 
         if (!doc.exists) {
           await userRef.set({
             'uid': user.uid,
             'name': 'Passenger',
             'phone':
-                widget.phoneNumber,
+            widget.phoneNumber,
             'email':
-                user.email ?? '',
+            user.email ?? '',
             'role': 'passenger',
             'createdAt':
-                FieldValue.serverTimestamp(),
+            FieldValue.serverTimestamp(),
           });
         }
       }
@@ -965,12 +965,12 @@ class _PhoneOtpScreenState
     return Scaffold(
       appBar: AppBar(
         title:
-            const Text('Verify Phone'),
+        const Text('Verify Phone'),
       ),
       body: SafeArea(
         child: Padding(
           padding:
-              const EdgeInsets.all(24),
+          const EdgeInsets.all(24),
           child: Column(
             children: [
               const SizedBox(height: 35),
@@ -979,7 +979,7 @@ class _PhoneOtpScreenState
                 Icons.sms_outlined,
                 size: 70,
                 color:
-                    Color(0xFF0F9D58),
+                Color(0xFF0F9D58),
               ),
 
               const SizedBox(height: 20),
@@ -989,7 +989,7 @@ class _PhoneOtpScreenState
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight:
-                      FontWeight.bold,
+                  FontWeight.bold,
                 ),
               ),
 
@@ -998,10 +998,10 @@ class _PhoneOtpScreenState
               Text(
                 'OTP sent to ${widget.phoneNumber}',
                 textAlign:
-                    TextAlign.center,
+                TextAlign.center,
                 style: const TextStyle(
                   color:
-                      Colors.black54,
+                  Colors.black54,
                 ),
               ),
 
@@ -1009,25 +1009,25 @@ class _PhoneOtpScreenState
 
               TextField(
                 controller:
-                    otpController,
+                otpController,
                 keyboardType:
-                    TextInputType.number,
+                TextInputType.number,
                 maxLength: 6,
                 textAlign:
-                    TextAlign.center,
+                TextAlign.center,
                 style: const TextStyle(
                   fontSize: 25,
                   fontWeight:
-                      FontWeight.bold,
+                  FontWeight.bold,
                   letterSpacing: 8,
                 ),
                 decoration:
-                    InputDecoration(
+                InputDecoration(
                   hintText: '------',
                   border:
-                      OutlineInputBorder(
+                  OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(
+                    BorderRadius.circular(
                       16,
                     ),
                   ),
@@ -1046,14 +1046,14 @@ class _PhoneOtpScreenState
                   child: loading
                       ? const CircularProgressIndicator()
                       : const Text(
-                          'Verify & Login',
-                          style:
-                              TextStyle(
-                            fontSize: 17,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
+                    'Verify & Login',
+                    style:
+                    TextStyle(
+                      fontSize: 17,
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1082,64 +1082,64 @@ class PassengerRegistrationScreen
 
   @override
   State<PassengerRegistrationScreen>
-      createState() =>
-          _PassengerRegistrationScreenState();
+  createState() =>
+      _PassengerRegistrationScreenState();
 }
 
 class _PassengerRegistrationScreenState
     extends State<
         PassengerRegistrationScreen> {
   final nameController =
-      TextEditingController();
+  TextEditingController();
 
   final emailController =
-      TextEditingController();
+  TextEditingController();
 
   final phoneController =
-      TextEditingController();
+  TextEditingController();
 
   final passwordController =
-      TextEditingController();
+  TextEditingController();
 
   bool loading = false;
   bool hidePassword = true;
 
   Future<void> _register() async {
     final name =
-        nameController.text.trim();
+    nameController.text.trim();
 
     final email =
-        emailController.text.trim();
+    emailController.text.trim();
 
     final phone =
-        phoneController.text.trim();
+    phoneController.text.trim();
 
     final password =
-        passwordController.text.trim();
+    passwordController.text.trim();
 
-   if (name.isEmpty ||
-       email.isEmpty ||
-       phone.isEmpty ||
-       password.isEmpty) {
-     _message(
-       'Full Name, Email, Phone Number and Password are required.',
-     );
-     return;
-   }
+    if (name.isEmpty ||
+        email.isEmpty ||
+        phone.isEmpty ||
+        password.isEmpty) {
+      _message(
+        'Full Name, Email, Phone Number and Password are required.',
+      );
+      return;
+    }
 
-   if (password.length < 6) {
-     _message(
-       'Password must be at least 6 characters long.',
-     );
-     return;
-   }
+    if (password.length < 6) {
+      _message(
+        'Password must be at least 6 characters long.',
+      );
+      return;
+    }
 
     setState(() => loading = true);
 
     try {
       final credential =
-          await FirebaseAuth.instance
-              .createUserWithEmailAndPassword(
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -1167,7 +1167,7 @@ class _PassengerRegistrationScreenState
         'phone': phone,
         'role': 'passenger',
         'createdAt':
-            FieldValue.serverTimestamp(),
+        FieldValue.serverTimestamp(),
       });
 
       _message(
@@ -1190,21 +1190,21 @@ class _PassengerRegistrationScreenState
   }
 
   String _firebaseError(
-    FirebaseAuthException e,
-  ) {
-   switch (e.code) {
-     case 'invalid-email':
-       return 'Invalid email address.';
-     case 'email-already-in-use':
-       return 'This email is already registered.';
-     case 'weak-password':
-       return 'Password is too weak.';
-     case 'network-request-failed':
-       return 'Please check your internet connection.';
-     default:
-       return e.message ??
-           'Registration error.';
-   }
+      FirebaseAuthException e,
+      ) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'Invalid email address.';
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'weak-password':
+        return 'Password is too weak.';
+      case 'network-request-failed':
+        return 'Please check your internet connection.';
+      default:
+        return e.message ??
+            'Registration error.';
+    }
   }
 
   void _message(String text) {
@@ -1214,7 +1214,7 @@ class _PassengerRegistrationScreenState
         .showSnackBar(
       SnackBar(
         behavior:
-            SnackBarBehavior.floating,
+        SnackBarBehavior.floating,
         content: Text(text),
       ),
     );
@@ -1222,7 +1222,7 @@ class _PassengerRegistrationScreenState
 
   Widget _field({
     required TextEditingController
-        controller,
+    controller,
     required String label,
     required IconData icon,
     TextInputType? keyboardType,
@@ -1240,11 +1240,11 @@ class _PassengerRegistrationScreenState
         filled: true,
         fillColor: Colors.grey.shade100,
         border:
-            OutlineInputBorder(
+        OutlineInputBorder(
           borderRadius:
-              BorderRadius.circular(16),
+          BorderRadius.circular(16),
           borderSide:
-              BorderSide.none,
+          BorderSide.none,
         ),
       ),
     );
@@ -1262,20 +1262,20 @@ class _PassengerRegistrationScreenState
       body: SafeArea(
         child: SingleChildScrollView(
           padding:
-              const EdgeInsets.all(24),
+          const EdgeInsets.all(24),
           child: Column(
             children: [
               Container(
                 width: 85,
                 height: 85,
                 decoration:
-                    BoxDecoration(
+                BoxDecoration(
                   color:
-                      const Color(
+                  const Color(
                     0xFFE2F7EA,
                   ),
                   borderRadius:
-                      BorderRadius.circular(
+                  BorderRadius.circular(
                     27,
                   ),
                 ),
@@ -1283,7 +1283,7 @@ class _PassengerRegistrationScreenState
                   Icons.person_add_alt_1,
                   size: 45,
                   color:
-                      Color(0xFF0F9D58),
+                  Color(0xFF0F9D58),
                 ),
               ),
 
@@ -1294,7 +1294,7 @@ class _PassengerRegistrationScreenState
                 style: TextStyle(
                   fontSize: 29,
                   fontWeight:
-                      FontWeight.w900,
+                  FontWeight.w900,
                 ),
               ),
 
@@ -1302,12 +1302,12 @@ class _PassengerRegistrationScreenState
 
               const Text(
                 'Create your passenger account\n'
-                'and start your journey.',
+                    'and start your journey.',
                 textAlign:
-                    TextAlign.center,
+                TextAlign.center,
                 style: TextStyle(
                   color:
-                      Colors.black54,
+                  Colors.black54,
                   height: 1.4,
                 ),
               ),
@@ -1316,61 +1316,61 @@ class _PassengerRegistrationScreenState
 
               _field(
                 controller:
-                    nameController,
+                nameController,
                 label: 'Full Name',
                 icon:
-                    Icons.person_outline,
+                Icons.person_outline,
               ),
 
               const SizedBox(height: 14),
 
               _field(
                 controller:
-                    emailController,
+                emailController,
                 label: 'Email',
                 icon:
-                    Icons.email_outlined,
+                Icons.email_outlined,
                 keyboardType:
-                    TextInputType.emailAddress,
+                TextInputType.emailAddress,
               ),
 
               const SizedBox(height: 14),
 
               _field(
                 controller:
-                    phoneController,
+                phoneController,
                 label:
-                    'Phone Number',
+                'Phone Number',
                 icon:
-                    Icons.phone_outlined,
+                Icons.phone_outlined,
                 keyboardType:
-                    TextInputType.phone,
+                TextInputType.phone,
               ),
 
               const SizedBox(height: 14),
 
               _field(
                 controller:
-                    passwordController,
+                passwordController,
                 label: 'Password',
                 icon:
-                    Icons.lock_outline,
+                Icons.lock_outline,
                 obscureText:
-                    hidePassword,
+                hidePassword,
                 suffixIcon:
-                    IconButton(
+                IconButton(
                   onPressed: () {
                     setState(() {
                       hidePassword =
-                          !hidePassword;
+                      !hidePassword;
                     });
                   },
                   icon: Icon(
                     hidePassword
                         ? Icons
-                            .visibility_outlined
+                        .visibility_outlined
                         : Icons
-                            .visibility_off_outlined,
+                        .visibility_off_outlined,
                   ),
                 ),
               ),
@@ -1381,45 +1381,45 @@ class _PassengerRegistrationScreenState
                 width: double.infinity,
                 height: 55,
                 child:
-                    ElevatedButton(
+                ElevatedButton(
                   onPressed:
-                      loading
-                          ? null
-                          : _register,
+                  loading
+                      ? null
+                      : _register,
                   style:
-                      ElevatedButton
-                          .styleFrom(
+                  ElevatedButton
+                      .styleFrom(
                     backgroundColor:
-                        const Color(
+                    const Color(
                       0xFF0F9D58,
                     ),
                     foregroundColor:
-                        Colors.white,
+                    Colors.white,
                     shape:
-                        RoundedRectangleBorder(
+                    RoundedRectangleBorder(
                       borderRadius:
-                          BorderRadius
-                              .circular(
+                      BorderRadius
+                          .circular(
                         16,
                       ),
                     ),
                   ),
                   child: loading
                       ? const CircularProgressIndicator(
-                          color:
-                              Colors.white,
-                        )
+                    color:
+                    Colors.white,
+                  )
                       : const Text(
-                          'Create Passenger Account',
-                          style:
-                              TextStyle(
-                            fontSize:
-                                16,
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                          ),
-                        ),
+                    'Create Passenger Account',
+                    style:
+                    TextStyle(
+                      fontSize:
+                      16,
+                      fontWeight:
+                      FontWeight
+                          .bold,
+                    ),
+                  ),
                 ),
               ),
 
@@ -1429,10 +1429,10 @@ class _PassengerRegistrationScreenState
                 onPressed: loading
                     ? null
                     : () {
-                        Navigator.pop(
-                          context,
-                        );
-                      },
+                  Navigator.pop(
+                    context,
+                  );
+                },
                 child: const Text(
                   'Already have an account? Login',
                 ),
@@ -1473,25 +1473,25 @@ class GooglePassengerRegistration
 
   @override
   State<GooglePassengerRegistration>
-      createState() =>
-          _GooglePassengerRegistrationState();
+  createState() =>
+      _GooglePassengerRegistrationState();
 }
 
 class _GooglePassengerRegistrationState
     extends State<
         GooglePassengerRegistration> {
   final phoneController =
-      TextEditingController();
+  TextEditingController();
 
   bool loading = false;
 
   Future<void> _completeRegistration() async {
     final phone =
-        phoneController.text.trim();
+    phoneController.text.trim();
 
     if (phone.isEmpty) {
       _message(
-       'Please enter your phone number.',
+        'Please enter your phone number.',
       );
       return;
     }
@@ -1505,15 +1505,15 @@ class _GooglePassengerRegistrationState
           .set({
         'uid': widget.user.uid,
         'name':
-            widget.googleName.isNotEmpty
-                ? widget.googleName
-                : 'Passenger',
+        widget.googleName.isNotEmpty
+            ? widget.googleName
+            : 'Passenger',
         'email': widget.googleEmail,
         'phone': phone,
         'role': 'passenger',
         'provider': 'google',
         'createdAt':
-            FieldValue.serverTimestamp(),
+        FieldValue.serverTimestamp(),
       });
 
       if (!mounted) return;
@@ -1522,9 +1522,9 @@ class _GooglePassengerRegistrationState
         context,
         MaterialPageRoute(
           builder: (_) =>
-              const HomeScreen(),
+          const HomeScreen(),
         ),
-        (route) => false,
+            (route) => false,
       );
     } catch (e) {
       debugPrint('$e');
@@ -1560,20 +1560,20 @@ class _GooglePassengerRegistrationState
       body: SafeArea(
         child: SingleChildScrollView(
           padding:
-              const EdgeInsets.all(24),
+          const EdgeInsets.all(24),
           child: Column(
             children: [
               Container(
                 width: 90,
                 height: 90,
                 decoration:
-                    BoxDecoration(
+                BoxDecoration(
                   color:
-                      const Color(
+                  const Color(
                     0xFFE2F7EA,
                   ),
                   borderRadius:
-                      BorderRadius.circular(
+                  BorderRadius.circular(
                     28,
                   ),
                 ),
@@ -1581,7 +1581,7 @@ class _GooglePassengerRegistrationState
                   Icons.verified_user_outlined,
                   size: 48,
                   color:
-                      Color(0xFF0F9D58),
+                  Color(0xFF0F9D58),
                 ),
               ),
 
@@ -1592,7 +1592,7 @@ class _GooglePassengerRegistrationState
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight:
-                      FontWeight.w900,
+                  FontWeight.w900,
                 ),
               ),
 
@@ -1600,12 +1600,12 @@ class _GooglePassengerRegistrationState
 
               Text(
                 'Welcome ${widget.googleName.isNotEmpty ? widget.googleName : 'Passenger'}.\n'
-                'Just add your phone number.',
+                    'Just add your phone number.',
                 textAlign:
-                    TextAlign.center,
+                TextAlign.center,
                 style: const TextStyle(
                   color:
-                      Colors.black54,
+                  Colors.black54,
                   height: 1.5,
                 ),
               ),
@@ -1614,30 +1614,30 @@ class _GooglePassengerRegistrationState
 
               TextField(
                 controller:
-                    phoneController,
+                phoneController,
                 keyboardType:
-                    TextInputType.phone,
+                TextInputType.phone,
                 decoration:
-                    InputDecoration(
+                InputDecoration(
                   labelText:
-                      'Phone Number',
+                  'Phone Number',
                   hintText:
-                      '+92 300 1234567',
+                  '+92 300 1234567',
                   prefixIcon:
-                      const Icon(
+                  const Icon(
                     Icons.phone_outlined,
                   ),
                   filled: true,
                   fillColor:
-                      Colors.grey.shade100,
+                  Colors.grey.shade100,
                   border:
-                      OutlineInputBorder(
+                  OutlineInputBorder(
                     borderRadius:
-                        BorderRadius.circular(
+                    BorderRadius.circular(
                       16,
                     ),
                     borderSide:
-                        BorderSide.none,
+                    BorderSide.none,
                   ),
                 ),
               ),
@@ -1648,45 +1648,45 @@ class _GooglePassengerRegistrationState
                 width: double.infinity,
                 height: 55,
                 child:
-                    ElevatedButton(
+                ElevatedButton(
                   onPressed:
-                      loading
-                          ? null
-                          : _completeRegistration,
+                  loading
+                      ? null
+                      : _completeRegistration,
                   style:
-                      ElevatedButton
-                          .styleFrom(
+                  ElevatedButton
+                      .styleFrom(
                     backgroundColor:
-                        const Color(
+                    const Color(
                       0xFF0F9D58,
                     ),
                     foregroundColor:
-                        Colors.white,
+                    Colors.white,
                     shape:
-                        RoundedRectangleBorder(
+                    RoundedRectangleBorder(
                       borderRadius:
-                          BorderRadius
-                              .circular(
+                      BorderRadius
+                          .circular(
                         16,
                       ),
                     ),
                   ),
                   child: loading
                       ? const CircularProgressIndicator(
-                          color:
-                              Colors.white,
-                        )
+                    color:
+                    Colors.white,
+                  )
                       : const Text(
-                          'Continue to Ride',
-                          style:
-                              TextStyle(
-                            fontSize:
-                                17,
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                          ),
-                        ),
+                    'Continue to Ride',
+                    style:
+                    TextStyle(
+                      fontSize:
+                      17,
+                      fontWeight:
+                      FontWeight
+                          .bold,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1760,7 +1760,7 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => HomeScreen(initialRole: 'Driver', initialVehicle: widget.vehicle)),
-        (route) => route.isFirst,
+            (route) => route.isFirst,
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registration could not be saved.')));
@@ -2144,7 +2144,7 @@ class _DriverLoadingScreenState extends State<DriverLoadingScreen>
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 350),
           pageBuilder: (_, animation, secondaryAnimation) =>
-              const DriverVehicleScreen(),
+          const DriverVehicleScreen(),
           transitionsBuilder: (_, animation, secondaryAnimation, child) =>
               FadeTransition(opacity: animation, child: child),
         ),
@@ -2406,11 +2406,11 @@ class _DriverVehicleScreenState extends State<DriverVehicleScreen> {
           ),
           boxShadow: isSelected
               ? const [
-                  BoxShadow(
-                    color: Color(0x6600FF55),
-                    blurRadius: 22,
-                  ),
-                ]
+            BoxShadow(
+              color: Color(0x6600FF55),
+              blurRadius: 22,
+            ),
+          ]
               : const [],
         ),
         child: Row(
@@ -2573,7 +2573,7 @@ class _HomeScreenState
   GoogleMapController? mapController;
 
   static const LatLng defaultLocation =
-      LatLng(31.5204, 74.3587);
+  LatLng(31.5204, 74.3587);
 
   LatLng currentLocation =
       defaultLocation;
@@ -2582,13 +2582,13 @@ class _HomeScreenState
   final Set<Polyline> polylines = {};
 
   final pickupController =
-      TextEditingController();
+  TextEditingController();
 
   final destinationController =
-      TextEditingController();
+  TextEditingController();
 
   final fareController =
-      TextEditingController();
+  TextEditingController();
 
   bool locationLoading = false;
   bool driverOnline = false;
@@ -2635,8 +2635,8 @@ class _HomeScreenState
 
     try {
       final serviceEnabled =
-          await Geolocator
-              .isLocationServiceEnabled();
+      await Geolocator
+          .isLocationServiceEnabled();
 
       if (!serviceEnabled) {
         _showMessage(
@@ -2646,16 +2646,16 @@ class _HomeScreenState
       }
 
       LocationPermission permission =
-          await Geolocator.checkPermission();
+      await Geolocator.checkPermission();
 
       if (permission ==
           LocationPermission.denied) {
         permission =
-            await Geolocator.requestPermission();
+        await Geolocator.requestPermission();
       }
 
       if (permission ==
-              LocationPermission.denied ||
+          LocationPermission.denied ||
           permission ==
               LocationPermission.deniedForever) {
         _showMessage(
@@ -2665,8 +2665,8 @@ class _HomeScreenState
       }
 
       final position =
-          await Geolocator
-              .getCurrentPosition();
+      await Geolocator
+          .getCurrentPosition();
 
       currentLocation = LatLng(
         position.latitude,
@@ -2678,7 +2678,7 @@ class _HomeScreenState
           // Use Google's default blue location dot instead of a custom red marker.
           // Removing this ID also cleans up any marker left by an older state.
           markers.removeWhere(
-            (marker) => marker.markerId.value == 'my_location',
+                (marker) => marker.markerId.value == 'my_location',
           );
         });
       }
@@ -2766,7 +2766,7 @@ class _HomeScreenState
 
     try {
       final newStatus =
-          !driverOnline;
+      !driverOnline;
 
       await firestore
           .collection('drivers')
@@ -2776,8 +2776,8 @@ class _HomeScreenState
           'uid': user.uid,
           'isOnline': newStatus,
           'updatedAt':
-              FieldValue
-                  .serverTimestamp(),
+          FieldValue
+              .serverTimestamp(),
         },
         SetOptions(
           merge: true,
@@ -2817,17 +2817,17 @@ class _HomeScreenState
         return SafeArea(
           child: Padding(
             padding:
-                const EdgeInsets.all(20),
+            const EdgeInsets.all(20),
             child: Column(
               mainAxisSize:
-                  MainAxisSize.min,
+              MainAxisSize.min,
               children: [
                 const Text(
                   'Select Side',
                   style: TextStyle(
                     fontSize: 23,
                     fontWeight:
-                        FontWeight.bold,
+                    FontWeight.bold,
                   ),
                 ),
                 const SizedBox(
@@ -2835,37 +2835,37 @@ class _HomeScreenState
                 ),
                 ListTile(
                   leading:
-                      const CircleAvatar(
+                  const CircleAvatar(
                     child: Icon(
                       Icons.person,
                     ),
                   ),
                   title:
-                      const Text(
+                  const Text(
                     'Passenger Side',
                     style: TextStyle(
                       fontWeight:
-                          FontWeight.bold,
+                      FontWeight.bold,
                     ),
                   ),
                   subtitle:
-                      const Text(
+                  const Text(
                     'Ride request bhejein',
                   ),
                   trailing:
-                      selectedRole ==
-                              'Passenger'
-                          ? const Icon(
-                              Icons
-                                  .check_circle,
-                              color:
-                                  Colors.green,
-                            )
-                          : null,
+                  selectedRole ==
+                      'Passenger'
+                      ? const Icon(
+                    Icons
+                        .check_circle,
+                    color:
+                    Colors.green,
+                  )
+                      : null,
                   onTap: () {
                     setState(() {
                       selectedRole =
-                          'Passenger';
+                      'Passenger';
                     });
 
                     Navigator.pop(
@@ -2878,34 +2878,34 @@ class _HomeScreenState
                 ),
                 ListTile(
                   leading:
-                      const CircleAvatar(
+                  const CircleAvatar(
                     child: Icon(
                       Icons
                           .directions_car,
                     ),
                   ),
                   title:
-                      const Text(
+                  const Text(
                     'Driver Side',
                     style: TextStyle(
                       fontWeight:
-                          FontWeight.bold,
+                      FontWeight.bold,
                     ),
                   ),
                   subtitle:
-                      const Text(
+                  const Text(
                     'Ride requests accept karein',
                   ),
                   trailing:
-                      selectedRole ==
-                              'Driver'
-                          ? const Icon(
-                              Icons
-                                  .check_circle,
-                              color:
-                                  Colors.green,
-                            )
-                          : null,
+                  selectedRole ==
+                      'Driver'
+                      ? const Icon(
+                    Icons
+                        .check_circle,
+                    color:
+                    Colors.green,
+                  )
+                      : null,
                   onTap: () async {
                     Navigator.pop(sheetContext);
                     await _openDriverMode();
@@ -3027,11 +3027,11 @@ class _HomeScreenState
   }
 
   Widget _vehicleChoice(
-    BuildContext sheetContext, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
+      BuildContext sheetContext, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+      }) {
     final selected = selectedVehicle == title;
 
     return Container(
@@ -3100,9 +3100,9 @@ class _HomeScreenState
     firestore
         .collection('rides')
         .where(
-          'status',
-          isEqualTo: 'searching',
-        )
+      'status',
+      isEqualTo: 'searching',
+    )
         .snapshots()
         .listen((snapshot) {
       if (!mounted) return;
@@ -3126,7 +3126,7 @@ class _HomeScreenState
       }
 
       rideNotificationShown =
-          true;
+      true;
 
       _showRideNotification(
         ride,
@@ -3139,11 +3139,11 @@ class _HomeScreenState
   ============================================================ */
 
   void _showRideNotification(
-    QueryDocumentSnapshot ride,
-  ) {
+      QueryDocumentSnapshot ride,
+      ) {
     final data =
-        ride.data()
-            as Map<String, dynamic>;
+    ride.data()
+    as Map<String, dynamic>;
 
     final pickup =
         data['pickup'] ??
@@ -3167,7 +3167,7 @@ class _HomeScreenState
                 Icons
                     .notifications_active,
                 color:
-                    Colors.green,
+                Colors.green,
               ),
               SizedBox(width: 10),
               Text('New Ride!'),
@@ -3175,17 +3175,17 @@ class _HomeScreenState
           ),
           content: Column(
             mainAxisSize:
-                MainAxisSize.min,
+            MainAxisSize.min,
             crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+            CrossAxisAlignment
+                .start,
             children: [
               Text(
                 '$pickup → $destination',
                 style:
-                    const TextStyle(
+                const TextStyle(
                   fontWeight:
-                      FontWeight.bold,
+                  FontWeight.bold,
                 ),
               ),
               const SizedBox(
@@ -3200,14 +3200,14 @@ class _HomeScreenState
             TextButton(
               onPressed: () {
                 rideNotificationShown =
-                    false;
+                false;
 
                 Navigator.pop(
                   dialogContext,
                 );
               },
               child:
-                  const Text('Later'),
+              const Text('Later'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -3216,14 +3216,14 @@ class _HomeScreenState
                 );
 
                 rideNotificationShown =
-                    false;
+                false;
 
                 _acceptRide(
                   ride.id,
                 );
               },
               child:
-                  const Text(
+              const Text(
                 'Accept Ride',
               ),
             ),
@@ -3248,24 +3248,24 @@ class _HomeScreenState
     }
 
     final pickup =
-        pickupController.text.trim();
+    pickupController.text.trim();
 
     final destination =
-        destinationController.text.trim();
+    destinationController.text.trim();
 
     final fareText =
-        fareController.text.trim();
+    fareController.text.trim();
 
     if (pickup.isEmpty ||
         destination.isEmpty) {
       _showMessage(
-       'Enter pickup and destination.',
+        'Enter pickup and destination.',
       );
       return;
     }
 
     final fare =
-        double.tryParse(
+    double.tryParse(
       fareText,
     );
 
@@ -3279,38 +3279,38 @@ class _HomeScreenState
 
     try {
       final rideRef =
-          await firestore
-              .collection('rides')
-              .add({
+      await firestore
+          .collection('rides')
+          .add({
         'passengerId':
-            user.uid,
+        user.uid,
         'passengerName':
-            user.displayName ??
-                'Passenger',
+        user.displayName ??
+            'Passenger',
         'passengerEmail':
-            user.email ?? '',
+        user.email ?? '',
         'pickup': pickup,
         'destination':
-            destination,
+        destination,
         'pickupLat':
-            currentLocation
-                .latitude,
+        currentLocation
+            .latitude,
         'pickupLng':
-            currentLocation
-                .longitude,
+        currentLocation
+            .longitude,
         'rideType':
-            selectedRide,
+        selectedRide,
         'fare': fare,
         'currency': 'PKR',
         'status': 'searching',
         'driverId': null,
         'driverName': null,
         'createdAt':
-            FieldValue
-                .serverTimestamp(),
+        FieldValue
+            .serverTimestamp(),
         'updatedAt':
-            FieldValue
-                .serverTimestamp(),
+        FieldValue
+            .serverTimestamp(),
       });
 
       if (!mounted) return;
@@ -3343,8 +3343,8 @@ class _HomeScreenState
   ============================================================ */
 
   Future<void> _acceptRide(
-    String rideId,
-  ) async {
+      String rideId,
+      ) async {
     final user = currentUser;
 
     if (user == null) {
@@ -3361,39 +3361,39 @@ class _HomeScreenState
           .update({
         'status': 'accepted',
         'driverId':
-            user.uid,
+        user.uid,
         'driverName':
-            user.displayName ??
-                'Driver',
+        user.displayName ??
+            'Driver',
         'driverPhone':
-            user.phoneNumber ?? '',
+        user.phoneNumber ?? '',
         'acceptedAt':
-            FieldValue
-                .serverTimestamp(),
+        FieldValue
+            .serverTimestamp(),
         'updatedAt':
-            FieldValue
-                .serverTimestamp(),
+        FieldValue
+            .serverTimestamp(),
       });
 
       final rideDoc =
-          await firestore
-              .collection('rides')
-              .doc(rideId)
-              .get();
+      await firestore
+          .collection('rides')
+          .doc(rideId)
+          .get();
 
       final data =
-          rideDoc.data();
+      rideDoc.data();
 
       if (data != null) {
         final pickupLat =
-            (data['pickupLat']
-                    as num?)
-                ?.toDouble();
+        (data['pickupLat']
+        as num?)
+            ?.toDouble();
 
         final pickupLng =
-            (data['pickupLng']
-                    as num?)
-                ?.toDouble();
+        (data['pickupLng']
+        as num?)
+            ?.toDouble();
 
         if (pickupLat != null &&
             pickupLng != null) {
@@ -3425,26 +3425,26 @@ class _HomeScreenState
   ============================================================ */
 
   void _showRideOnMap(
-    LatLng pickup,
-  ) {
+      LatLng pickup,
+      ) {
     setState(() {
       markers
         ..removeWhere(
-          (m) =>
-              m.markerId.value ==
+              (m) =>
+          m.markerId.value ==
               'ride_pickup',
         )
         ..add(
           Marker(
             markerId:
-                const MarkerId(
+            const MarkerId(
               'ride_pickup',
             ),
             position: pickup,
             infoWindow:
-                const InfoWindow(
+            const InfoWindow(
               title:
-                  'Passenger Pickup',
+              'Passenger Pickup',
             ),
           ),
         );
@@ -3454,7 +3454,7 @@ class _HomeScreenState
       polylines.add(
         Polyline(
           polylineId:
-              const PolylineId(
+          const PolylineId(
             'ride_route',
           ),
           points: [
@@ -3473,30 +3473,30 @@ class _HomeScreenState
           LatLngBounds(
             southwest: LatLng(
               currentLocation
-                          .latitude <
-                      pickup.latitude
+                  .latitude <
+                  pickup.latitude
                   ? currentLocation
-                      .latitude
+                  .latitude
                   : pickup.latitude,
               currentLocation
-                          .longitude <
-                      pickup.longitude
+                  .longitude <
+                  pickup.longitude
                   ? currentLocation
-                      .longitude
+                  .longitude
                   : pickup.longitude,
             ),
             northeast: LatLng(
               currentLocation
-                          .latitude >
-                      pickup.latitude
+                  .latitude >
+                  pickup.latitude
                   ? currentLocation
-                      .latitude
+                  .latitude
                   : pickup.latitude,
               currentLocation
-                          .longitude >
-                      pickup.longitude
+                  .longitude >
+                  pickup.longitude
                   ? currentLocation
-                      .longitude
+                  .longitude
                   : pickup.longitude,
             ),
           ),
@@ -3511,8 +3511,8 @@ class _HomeScreenState
   ============================================================ */
 
   void _showPassengerStatus(
-    String rideId,
-  ) {
+      String rideId,
+      ) {
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -3527,29 +3527,29 @@ class _HomeScreenState
               .doc(rideId)
               .snapshots(),
           builder: (
-            context,
-            snapshot,
-          ) {
+              context,
+              snapshot,
+              ) {
             if (!snapshot.hasData) {
               return const Padding(
                 padding:
-                    EdgeInsets.all(30),
+                EdgeInsets.all(30),
                 child: Center(
                   child:
-                      CircularProgressIndicator(),
+                  CircularProgressIndicator(),
                 ),
               );
             }
 
             final data =
-                snapshot.data!
-                        .data()
-                    as Map<String, dynamic>?;
+            snapshot.data!
+                .data()
+            as Map<String, dynamic>?;
 
             if (data == null) {
               return const Padding(
                 padding:
-                    EdgeInsets.all(30),
+                EdgeInsets.all(30),
                 child: Text(
                   'Ride not found.',
                 ),
@@ -3567,8 +3567,8 @@ class _HomeScreenState
             return SafeArea(
               child: Padding(
                 padding:
-                    const EdgeInsets
-                        .fromLTRB(
+                const EdgeInsets
+                    .fromLTRB(
                   24,
                   10,
                   24,
@@ -3576,7 +3576,7 @@ class _HomeScreenState
                 ),
                 child: Column(
                   mainAxisSize:
-                      MainAxisSize.min,
+                  MainAxisSize.min,
                   children: [
                     const Icon(
                       Icons
@@ -3591,11 +3591,11 @@ class _HomeScreenState
                         status,
                       ),
                       style:
-                          const TextStyle(
+                      const TextStyle(
                         fontSize: 24,
                         fontWeight:
-                            FontWeight
-                                .bold,
+                        FontWeight
+                            .bold,
                       ),
                     ),
                     const SizedBox(
@@ -3606,7 +3606,7 @@ class _HomeScreenState
                         status,
                       ),
                       textAlign:
-                          TextAlign.center,
+                      TextAlign.center,
                     ),
                     if (driverName
                         .toString()
@@ -3616,28 +3616,28 @@ class _HomeScreenState
                       ),
                       Card(
                         child:
-                            ListTile(
+                        ListTile(
                           leading:
-                              const CircleAvatar(
+                          const CircleAvatar(
                             child:
-                                Icon(
+                            Icon(
                               Icons
                                   .person,
                             ),
                           ),
                           title:
-                              Text(
+                          Text(
                             driverName
                                 .toString(),
                             style:
-                                const TextStyle(
+                            const TextStyle(
                               fontWeight:
-                                  FontWeight
-                                      .bold,
+                              FontWeight
+                                  .bold,
                             ),
                           ),
                           subtitle:
-                              const Text(
+                          const Text(
                             'Your Driver',
                           ),
                         ),
@@ -3650,10 +3650,10 @@ class _HomeScreenState
                         'searching')
                       SizedBox(
                         width:
-                            double.infinity,
+                        double.infinity,
                         height: 52,
                         child:
-                            OutlinedButton(
+                        OutlinedButton(
                           onPressed:
                               () {
                             _cancelRide(
@@ -3666,7 +3666,7 @@ class _HomeScreenState
                             );
                           },
                           child:
-                              const Text(
+                          const Text(
                             'Cancel Ride',
                           ),
                         ),
@@ -3682,8 +3682,8 @@ class _HomeScreenState
   }
 
   String _statusTitle(
-    String status,
-  ) {
+      String status,
+      ) {
     switch (status) {
       case 'accepted':
         return 'Driver Accepted!';
@@ -3701,8 +3701,8 @@ class _HomeScreenState
   }
 
   String _statusMessage(
-    String status,
-  ) {
+      String status,
+      ) {
     switch (status) {
       case 'accepted':
         return 'Your driver has accepted the ride.';
@@ -3724,8 +3724,8 @@ class _HomeScreenState
   ============================================================ */
 
   Future<void> _cancelRide(
-    String rideId,
-  ) async {
+      String rideId,
+      ) async {
     try {
       await firestore
           .collection('rides')
@@ -3733,10 +3733,10 @@ class _HomeScreenState
           .update({
         'status': 'cancelled',
         'cancelledBy':
-            'passenger',
+        'passenger',
         'updatedAt':
-            FieldValue
-                .serverTimestamp(),
+        FieldValue
+            .serverTimestamp(),
       });
     } catch (e) {
       debugPrint('$e');
@@ -3752,27 +3752,27 @@ class _HomeScreenState
       context: context,
       showDragHandle: true,
       backgroundColor:
-          Colors.white,
+      Colors.white,
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding:
-                const EdgeInsets.all(
+            const EdgeInsets.all(
               20,
             ),
             child: Column(
               mainAxisSize:
-                  MainAxisSize.min,
+              MainAxisSize.min,
               crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+              CrossAxisAlignment
+                  .start,
               children: [
                 const Text(
                   'Choose Ride Type',
                   style: TextStyle(
                     fontSize: 23,
                     fontWeight:
-                        FontWeight.bold,
+                    FontWeight.bold,
                   ),
                 ),
                 const SizedBox(
@@ -3802,34 +3802,34 @@ class _HomeScreenState
   }
 
   Widget _rideType(
-    String title,
-    IconData icon,
-  ) {
+      String title,
+      IconData icon,
+      ) {
     return Card(
       margin:
-          const EdgeInsets.only(
+      const EdgeInsets.only(
         bottom: 10,
       ),
       elevation: 0,
       color:
-          Colors.grey.shade100,
+      Colors.grey.shade100,
       child: ListTile(
         contentPadding:
-            const EdgeInsets
-                .symmetric(
+        const EdgeInsets
+            .symmetric(
           horizontal: 16,
           vertical: 5,
         ),
         leading:
-            CircleAvatar(
+        CircleAvatar(
           backgroundColor:
-              const Color(
+          const Color(
             0xFFE2F7EA,
           ),
           child: Icon(
             icon,
             color:
-                const Color(
+            const Color(
               0xFF0F9D58,
             ),
           ),
@@ -3837,25 +3837,25 @@ class _HomeScreenState
         title: Text(
           title,
           style:
-              const TextStyle(
+          const TextStyle(
             fontWeight:
-                FontWeight.bold,
+            FontWeight.bold,
           ),
         ),
         subtitle:
-            const Text(
+        const Text(
           'Comfortable & reliable',
         ),
         trailing:
-            selectedRide ==
-                    title
-                ? const Icon(
-                    Icons
-                        .check_circle,
-                    color:
-                        Colors.green,
-                  )
-                : null,
+        selectedRide ==
+            title
+            ? const Icon(
+          Icons
+              .check_circle,
+          color:
+          Colors.green,
+        )
+            : null,
         onTap: () {
           setState(() {
             selectedRide =
@@ -3876,15 +3876,15 @@ class _HomeScreenState
 
   void _findRide() {
     final pickup =
-        pickupController.text.trim();
+    pickupController.text.trim();
 
     final destination =
-        destinationController
-            .text
-            .trim();
+    destinationController
+        .text
+        .trim();
 
     final fare =
-        fareController.text.trim();
+    fareController.text.trim();
 
     if (pickup.isEmpty ||
         destination.isEmpty) {
@@ -3906,27 +3906,27 @@ class _HomeScreenState
       showDragHandle: true,
       isScrollControlled: true,
       backgroundColor:
-          Colors.white,
+      Colors.white,
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding:
-                const EdgeInsets.all(
+            const EdgeInsets.all(
               20,
             ),
             child: Column(
               mainAxisSize:
-                  MainAxisSize.min,
+              MainAxisSize.min,
               crossAxisAlignment:
-                  CrossAxisAlignment
-                      .start,
+              CrossAxisAlignment
+                  .start,
               children: [
                 const Text(
                   'Choose Your Ride',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight:
-                        FontWeight.bold,
+                    FontWeight.bold,
                   ),
                 ),
                 const SizedBox(
@@ -3935,9 +3935,9 @@ class _HomeScreenState
                 Text(
                   '$pickup → $destination',
                   style:
-                      const TextStyle(
+                  const TextStyle(
                     color:
-                        Colors.black54,
+                    Colors.black54,
                   ),
                 ),
                 const SizedBox(
@@ -3970,42 +3970,42 @@ class _HomeScreenState
   }
 
   Widget _rideOption(
-    String title,
-    IconData icon,
-    String fare,
-  ) {
+      String title,
+      IconData icon,
+      String fare,
+      ) {
     final isSelected =
         selectedRide == title;
 
     return Card(
       margin:
-          const EdgeInsets.only(
+      const EdgeInsets.only(
         bottom: 10,
       ),
       elevation:
-          isSelected ? 3 : 0,
+      isSelected ? 3 : 0,
       color: isSelected
           ? const Color(
-              0xFFEAF9F0,
-            )
+        0xFFEAF9F0,
+      )
           : Colors.grey.shade100,
       child: ListTile(
         contentPadding:
-            const EdgeInsets
-                .symmetric(
+        const EdgeInsets
+            .symmetric(
           horizontal: 16,
           vertical: 6,
         ),
         leading:
-            CircleAvatar(
+        CircleAvatar(
           radius: 27,
           backgroundColor:
-              Colors.white,
+          Colors.white,
           child: Icon(
             icon,
             size: 28,
             color:
-                const Color(
+            const Color(
               0xFF0F9D58,
             ),
           ),
@@ -4013,31 +4013,31 @@ class _HomeScreenState
         title: Text(
           title,
           style:
-              const TextStyle(
+          const TextStyle(
             fontWeight:
-                FontWeight.bold,
+            FontWeight.bold,
             fontSize: 17,
           ),
         ),
         subtitle:
-            const Text(
+        const Text(
           'Nearby drivers',
         ),
         trailing:
-            Column(
+        Column(
           mainAxisAlignment:
-              MainAxisAlignment
-                  .center,
+          MainAxisAlignment
+              .center,
           crossAxisAlignment:
-              CrossAxisAlignment
-                  .end,
+          CrossAxisAlignment
+              .end,
           children: [
             Text(
               'Rs. $fare',
               style:
-                  const TextStyle(
+              const TextStyle(
                 fontWeight:
-                    FontWeight.bold,
+                FontWeight.bold,
                 fontSize: 16,
               ),
             ),
@@ -4045,12 +4045,12 @@ class _HomeScreenState
               const Text(
                 'Selected',
                 style:
-                    TextStyle(
+                TextStyle(
                   color:
-                      Colors.green,
+                  Colors.green,
                   fontSize: 12,
                   fontWeight:
-                      FontWeight.bold,
+                  FontWeight.bold,
                 ),
               ),
           ],
@@ -4076,17 +4076,17 @@ class _HomeScreenState
   ============================================================ */
 
   void _showMessage(
-    String message,
-  ) {
+      String message,
+      ) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context)
         .showSnackBar(
       SnackBar(
         behavior:
-            SnackBarBehavior.floating,
+        SnackBarBehavior.floating,
         content:
-            Text(message),
+        Text(message),
       ),
     );
   }
@@ -4095,251 +4095,251 @@ class _HomeScreenState
      BUILD
   ============================================================ */
 
- @override
- Widget build(
-   BuildContext context,
- ) {
-   final isDriver =
-       selectedRole ==
-           'Driver';
+  @override
+  Widget build(
+      BuildContext context,
+      ) {
+    final isDriver =
+        selectedRole ==
+            'Driver';
 
-   return Scaffold(
-     body: Stack(
-       children: [
-         GoogleMap(
-           initialCameraPosition: const CameraPosition(
-             target: defaultLocation,
-             zoom: 13,
-           ),
-           // Keep Google's default blue dot visible in startup and route mode.
-           myLocationEnabled: true,
-           myLocationButtonEnabled: false,
-           zoomControlsEnabled: false,
-           compassEnabled: false,
-           markers: markers,
-           polylines: polylines,
+    return Scaffold(
+      body: Stack(
+        children: [
+          GoogleMap(
+            initialCameraPosition: const CameraPosition(
+              target: defaultLocation,
+              zoom: 13,
+            ),
+            // Keep Google's default blue dot visible in startup and route mode.
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: false,
+            compassEnabled: false,
+            markers: markers,
+            polylines: polylines,
 
-           onCameraMoveStarted: () {
-             if (!isMapInteracting) {
-               setState(() => isMapInteracting = true);
-             }
-           },
+            onCameraMoveStarted: () {
+              if (!isMapInteracting) {
+                setState(() => isMapInteracting = true);
+              }
+            },
 
-           onCameraIdle: () {
-             if (isMapInteracting) {
-               setState(() => isMapInteracting = false);
-             }
-           },
+            onCameraIdle: () {
+              if (isMapInteracting) {
+                setState(() => isMapInteracting = false);
+              }
+            },
 
-           onTap: (_) {
-             setState(() => isMapInteracting = true);
+            onTap: (_) {
+              setState(() => isMapInteracting = true);
 
-             Future.delayed(const Duration(milliseconds: 250), () {
-               if (!mounted) return;
-               setState(() => isMapInteracting = false);
-             });
-           },
+              Future.delayed(const Duration(milliseconds: 250), () {
+                if (!mounted) return;
+                setState(() => isMapInteracting = false);
+              });
+            },
 
-           onMapCreated: (controller) {
-             mapController = controller;
-           },
-         ),
+            onMapCreated: (controller) {
+              mapController = controller;
+            },
+          ),
 
-         SafeArea(
-           child: Column(
-             children: [
-               // TOP SECTION
-               AnimatedSlide(
-                 duration: const Duration(milliseconds: 300),
-                 curve: Curves.easeInOutCubic,
-                 offset: isMapInteracting
-                     ? const Offset(0, -1.5)
-                     : Offset.zero,
-                 child: AnimatedOpacity(
-                   duration: const Duration(milliseconds: 250),
-                   opacity: isMapInteracting ? 0.0 : 1.0,
-                   child: Padding(
-                     padding:
-                         const EdgeInsets
-                             .all(16),
-                     child: Row(
-                       children: [
-                         Container(
-                           decoration:
-                               BoxDecoration(
-                             color:
-                                 Colors.white,
-                             borderRadius:
-                                 BorderRadius
-                                     .circular(
-                               14,
-                             ),
-                             boxShadow:
-                                 const [
-                               BoxShadow(
-                                 blurRadius:
-                                     10,
-                                 color: Colors
-                                     .black12,
-                               ),
-                             ],
-                           ),
-                           child:
-                               IconButton(
-                             onPressed:
-                                 _showMenu,
-                             icon:
-                                 const Icon(
-                               Icons.menu,
-                             ),
-                           ),
-                         ),
-                                                ],
-                     ),
-                   ),
-                 ),
-               ),
+          SafeArea(
+            child: Column(
+              children: [
+                // TOP SECTION
+                AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  offset: isMapInteracting
+                      ? const Offset(0, -1.5)
+                      : Offset.zero,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: isMapInteracting ? 0.0 : 1.0,
+                    child: Padding(
+                      padding:
+                      const EdgeInsets
+                          .all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            decoration:
+                            BoxDecoration(
+                              color:
+                              Colors.white,
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                14,
+                              ),
+                              boxShadow:
+                              const [
+                                BoxShadow(
+                                  blurRadius:
+                                  10,
+                                  color: Colors
+                                      .black12,
+                                ),
+                              ],
+                            ),
+                            child:
+                            IconButton(
+                              onPressed:
+                              _showMenu,
+                              icon:
+                              const Icon(
+                                Icons.menu,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
 
-               const Spacer(),
+                const Spacer(),
 
-               // DRIVER ONLINE SECTION
-               AnimatedSlide(
-                 duration: const Duration(milliseconds: 300),
-                 curve: Curves.easeInOutCubic,
-                 offset: isMapInteracting
-                     ? const Offset(0, 1.5)
-                     : Offset.zero,
-                 child: AnimatedOpacity(
-                   duration: const Duration(milliseconds: 250),
-                   opacity: isMapInteracting ? 0.0 : 1.0,
-                   child: Column(
-                     children: [
-                       if (isDriver)
-                         Container(
-                           margin:
-                               const EdgeInsets
-                                   .symmetric(
-                             horizontal: 16,
-                           ),
-                           padding:
-                               const EdgeInsets
-                                   .symmetric(
-                             horizontal: 16,
-                             vertical: 12,
-                           ),
-                           decoration:
-                               BoxDecoration(
-                             color:
-                                 Colors.white,
-                             borderRadius:
-                                 BorderRadius
-                                     .circular(
-                               16,
-                             ),
-                             boxShadow:
-                                 const [
-                               BoxShadow(
-                                 blurRadius:
-                                     12,
-                                 color:
-                                     Colors.black12,
-                               ),
-                             ],
-                           ),
-                           child:
-                               Row(
-                             children: [
-                               const Icon(
-                                 Icons
-                                     .power_settings_new,
-                               ),
-                               const SizedBox(
-                                 width:
-                                     10,
-                               ),
-                               Expanded(
-                                 child:
-                                     Text(
-                                   driverOnline
-                                       ? 'You are Online'
-                                       : 'You are Offline',
-                                   style:
-                                       const TextStyle(
-                                     fontWeight:
-                                         FontWeight.bold,
-                                   ),
-                                 ),
-                               ),
-                               Switch(
-                                 value:
-                                     driverOnline,
-                                 onChanged:
-                                     (_) {
-                                   _toggleDriverOnline();
-                                 },
-                               ),
-                             ],
-                           ),
-                         ),
+                // DRIVER ONLINE SECTION
+                AnimatedSlide(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOutCubic,
+                  offset: isMapInteracting
+                      ? const Offset(0, 1.5)
+                      : Offset.zero,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: isMapInteracting ? 0.0 : 1.0,
+                    child: Column(
+                      children: [
+                        if (isDriver)
+                          Container(
+                            margin:
+                            const EdgeInsets
+                                .symmetric(
+                              horizontal: 16,
+                            ),
+                            padding:
+                            const EdgeInsets
+                                .symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration:
+                            BoxDecoration(
+                              color:
+                              Colors.white,
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                16,
+                              ),
+                              boxShadow:
+                              const [
+                                BoxShadow(
+                                  blurRadius:
+                                  12,
+                                  color:
+                                  Colors.black12,
+                                ),
+                              ],
+                            ),
+                            child:
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons
+                                      .power_settings_new,
+                                ),
+                                const SizedBox(
+                                  width:
+                                  10,
+                                ),
+                                Expanded(
+                                  child:
+                                  Text(
+                                    driverOnline
+                                        ? 'You are Online'
+                                        : 'You are Offline',
+                                    style:
+                                    const TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Switch(
+                                  value:
+                                  driverOnline,
+                                  onChanged:
+                                      (_) {
+                                    _toggleDriverOnline();
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
 
-                       const SizedBox(
-                         height: 10,
-                       ),
+                        const SizedBox(
+                          height: 10,
+                        ),
 
-                       Align(
-                         alignment:
-                             Alignment.centerRight,
-                         child: Padding(
-                           padding:
-                               const EdgeInsets
-                                   .only(
-                             right: 16,
-                             bottom: 12,
-                           ),
-                           child:
-                               FloatingActionButton
-                                   .small(
-                             backgroundColor:
-                                 Colors.white,
-                             onPressed:
-                                 _getCurrentLocation,
-                             child:
-                                 locationLoading
-                                     ? const SizedBox(
-                                         width:
-                                             20,
-                                         height:
-                                             20,
-                                         child:
-                                             CircularProgressIndicator(
-                                           strokeWidth:
-                                               2,
-                                         ),
-                                       )
-                                     : const Icon(
-                                         Icons
-                                             .my_location,
-                                       ),
-                           ),
-                         ),
-                       ),
+                        Align(
+                          alignment:
+                          Alignment.centerRight,
+                          child: Padding(
+                            padding:
+                            const EdgeInsets
+                                .only(
+                              right: 16,
+                              bottom: 12,
+                            ),
+                            child:
+                            FloatingActionButton
+                                .small(
+                              backgroundColor:
+                              Colors.white,
+                              onPressed:
+                              _getCurrentLocation,
+                              child:
+                              locationLoading
+                                  ? const SizedBox(
+                                width:
+                                20,
+                                height:
+                                20,
+                                child:
+                                CircularProgressIndicator(
+                                  strokeWidth:
+                                  2,
+                                ),
+                              )
+                                  : const Icon(
+                                Icons
+                                    .my_location,
+                              ),
+                            ),
+                          ),
+                        ),
 
-                       if (!isDriver)
-                         _passengerRidePanel(),
+                        if (!isDriver)
+                          _passengerRidePanel(),
 
-                       if (isDriver)
-                         _driverRidePanel(),
-                     ],
-                   ),
-                 ),
-               ),
-             ],
-           ),
-         ),
-       ],
-     ),
-   );
- }
+                        if (isDriver)
+                          _driverRidePanel(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _passengerRidePanel() {
     return Container(
@@ -4376,7 +4376,7 @@ class _HomeScreenState
             ],
           ),
           const SizedBox(height: 12),
-                    GestureDetector(
+          GestureDetector(
             onTap: _openPassengerRoutePopup,
             child: Container(
               height: 58,
@@ -4458,13 +4458,13 @@ class _HomeScreenState
   }
 
   Widget _routePopupField(
-    TextEditingController controller,
-    String label,
-    String hint,
-    IconData icon, {
-    required bool isPickup,
-    required StateSetter setSheetState,
-  }) {
+      TextEditingController controller,
+      String label,
+      String hint,
+      IconData icon, {
+        required bool isPickup,
+        required StateSetter setSheetState,
+      }) {
     return TextField(
       controller: controller,
       textInputAction: TextInputAction.next,
@@ -4816,32 +4816,32 @@ class _HomeScreenState
       },
       child: AnimatedContainer(
         duration:
-            const Duration(
+        const Duration(
           milliseconds: 200,
         ),
         padding:
-            const EdgeInsets
-                .symmetric(
+        const EdgeInsets
+            .symmetric(
           vertical: 11,
         ),
         decoration:
-            BoxDecoration(
+        BoxDecoration(
           color: selected
               ? const Color(
-                  0xFFE2F7EA,
-                )
+            0xFFE2F7EA,
+          )
               : Colors.grey.shade100,
           borderRadius:
-              BorderRadius.circular(
+          BorderRadius.circular(
             14,
           ),
           border: Border.all(
             color: selected
                 ? const Color(
-                    0xFF0F9D58,
-                  )
+              0xFF0F9D58,
+            )
                 : Colors
-                    .transparent,
+                .transparent,
             width: 1.5,
           ),
         ),
@@ -4852,8 +4852,8 @@ class _HomeScreenState
               size: 25,
               color: selected
                   ? const Color(
-                      0xFF0F9D58,
-                    )
+                0xFF0F9D58,
+              )
                   : Colors.black54,
             ),
             const SizedBox(
@@ -4862,14 +4862,14 @@ class _HomeScreenState
             Text(
               title,
               style:
-                  TextStyle(
+              TextStyle(
                 fontSize: 12,
                 fontWeight:
-                    FontWeight.bold,
+                FontWeight.bold,
                 color: selected
                     ? const Color(
-                        0xFF0F9D58,
-                      )
+                  0xFF0F9D58,
+                )
                     : Colors.black87,
               ),
             ),
@@ -4906,151 +4906,151 @@ class _HomeScreenState
       child: widget.demoDriverMode
           ? _demoDriverPanelContent()
           : StreamBuilder<QuerySnapshot>(
-              stream: firestore
-                  .collection('rides')
-                  .where('status', isEqualTo: 'searching')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                return _realDriverPanelContent(snapshot);
-              },
-            ),
+        stream: firestore
+            .collection('rides')
+            .where('status', isEqualTo: 'searching')
+            .snapshots(),
+        builder: (context, snapshot) {
+          return _realDriverPanelContent(snapshot);
+        },
+      ),
     );
   }
 
   Widget _realDriverPanelContent(AsyncSnapshot<QuerySnapshot> snapshot) {
     return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F7EE),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Icon(
+                Icons.directions_car_rounded,
+                color: Color(0xFF0F9D58),
+                size: 27,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F7EE),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: const Icon(
-                      Icons.directions_car_rounded,
-                      color: Color(0xFF0F9D58),
-                      size: 27,
+                  const Text(
+                    'Driver Mode',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Driver Mode',
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        Text(
-                          selectedVehicle == null
-                              ? 'Choose your vehicle'
-                              : selectedVehicle!,
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    selectedVehicle == null
+                        ? 'Choose your vehicle'
+                        : selectedVehicle!,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
                     ),
-                  ),
-                  TextButton(
-                    onPressed: _showDriverVehicleSelection,
-                    child: const Text('Change'),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 11,
-                ),
-                decoration: BoxDecoration(
-                  color: driverOnline
-                      ? const Color(0xFFE8F7EE)
-                      : const Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.circle,
-                      size: 11,
-                      color: driverOnline
-                          ? const Color(0xFF0F9D58)
-                          : Colors.grey,
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        driverOnline
-                            ? 'You are Online • Waiting for rides'
-                            : 'You are Offline • Go online to receive rides',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Switch(
-                      value: driverOnline,
-                      onChanged: (_) => _toggleDriverOnline(),
-                    ),
-                  ],
+            ),
+            TextButton(
+              onPressed: _showDriverVehicleSelection,
+              child: const Text('Change'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 11,
+          ),
+          decoration: BoxDecoration(
+            color: driverOnline
+                ? const Color(0xFFE8F7EE)
+                : const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.circle,
+                size: 11,
+                color: driverOnline
+                    ? const Color(0xFF0F9D58)
+                    : Colors.grey,
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  driverOnline
+                      ? 'You are Online • Waiting for rides'
+                      : 'You are Offline • Go online to receive rides',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
-              if (!driverOnline)
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Go Online to receive passenger requests.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                )
-              else if (snapshot.connectionState == ConnectionState.waiting)
-                const Expanded(
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (snapshot.hasError)
-                const Expanded(
-                  child: Center(child: Text('Error loading ride requests.')),
-                )
-              else if ((snapshot.data?.docs ?? []).isEmpty)
-                const Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_rounded, size: 42),
-                        SizedBox(height: 7),
-                        Text(
-                          'No ride requests yet',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+              Switch(
+                value: driverOnline,
+                onChanged: (_) => _toggleDriverOnline(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (!driverOnline)
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Go Online to receive passenger requests.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          )
+        else if (snapshot.connectionState == ConnectionState.waiting)
+          const Expanded(
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (snapshot.hasError)
+            const Expanded(
+              child: Center(child: Text('Error loading ride requests.')),
+            )
+          else if ((snapshot.data?.docs ?? []).isEmpty)
+              const Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.search_rounded, size: 42),
+                      SizedBox(height: 7),
+                      Text(
+                        'No ride requests yet',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: _driverRequestCard(
-                    snapshot.data!.docs.first,
+                      ),
+                    ],
                   ),
                 ),
+              )
+            else
+              Expanded(
+                child: _driverRequestCard(
+                  snapshot.data!.docs.first,
+                ),
+              ),
       ],
     );
   }
@@ -5138,77 +5138,77 @@ class _HomeScreenState
             ),
           )
         else if (demoRideAccepted)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('On Trip • Demo Route', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 8),
-                const Text('Pickup: Liberty Market', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                const Text('Drop-off: Gulberg Main Boulevard', style: TextStyle(color: Colors.black54)),
-                const SizedBox(height: 8),
-                const Text('12.4 km • Rs. 450', style: TextStyle(color: Color(0xFF0F9D58), fontWeight: FontWeight.w900)),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: _completeDemoRide,
-                    icon: const Icon(Icons.flag_rounded),
-                    label: const Text('Complete Demo Ride', style: TextStyle(fontWeight: FontWeight.w900)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F9D58),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('On Trip • Demo Route', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 8),
+                  const Text('Pickup: Liberty Market', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  const Text('Drop-off: Gulberg Main Boulevard', style: TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 8),
+                  const Text('12.4 km • Rs. 450', style: TextStyle(color: Color(0xFF0F9D58), fontWeight: FontWeight.w900)),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: _completeDemoRide,
+                      icon: const Icon(Icons.flag_rounded),
+                      label: const Text('Complete Demo Ride', style: TextStyle(fontWeight: FontWeight.w900)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F9D58),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          )
-        else
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('New Ride Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                const SizedBox(height: 7),
-                const Text('Liberty Market → Gulberg Main Boulevard', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 5),
-                const Text('12.4 km • Offer: Rs. 450', style: TextStyle(color: Colors.black54)),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _showMessage('Demo request declined.'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.redAccent,
-                          side: const BorderSide(color: Colors.redAccent),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        ),
-                        child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w900)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _acceptDemoRide,
-                        icon: const Icon(Icons.check_rounded),
-                        label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w900)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F9D58),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ],
+              ),
+            )
+          else
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('New Ride Request', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 7),
+                  const Text('Liberty Market → Gulberg Main Boulevard', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 5),
+                  const Text('12.4 km • Offer: Rs. 450', style: TextStyle(color: Colors.black54)),
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _showMessage('Demo request declined.'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.redAccent,
+                            side: const BorderSide(color: Colors.redAccent),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                          child: const Text('Decline', style: TextStyle(fontWeight: FontWeight.w900)),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _acceptDemoRide,
+                          icon: const Icon(Icons.check_rounded),
+                          label: const Text('Accept', style: TextStyle(fontWeight: FontWeight.w900)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F9D58),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
       ],
     );
   }
@@ -5321,7 +5321,7 @@ class _HomeScreenState
                                 Icons.history_rounded,
                                 'Ride History',
                                 'View your previous rides',
-                                () {
+                                    () {
                                   Navigator.pop(dialogContext);
                                   Navigator.push(context, MaterialPageRoute(builder: (_) => const RideHistoryScreen()));
                                 },
@@ -5332,7 +5332,7 @@ class _HomeScreenState
                                   Icons.star_rounded,
                                   'Rate Your Ride',
                                   'Share your experience',
-                                  () {
+                                      () {
                                     Navigator.pop(dialogContext);
                                     Navigator.push(context, MaterialPageRoute(builder: (_) => const RatingScreen()));
                                   },
@@ -5342,7 +5342,7 @@ class _HomeScreenState
                                 Icons.settings_rounded,
                                 'Settings',
                                 'Account and app preferences',
-                                () {
+                                    () {
                                   Navigator.pop(dialogContext);
                                   Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
                                 },
@@ -5352,7 +5352,7 @@ class _HomeScreenState
                                 Icons.logout_rounded,
                                 'Logout',
                                 'Sign out of this account',
-                                () async {
+                                    () async {
                                   Navigator.pop(dialogContext);
                                   await auth.signOut();
                                 },
