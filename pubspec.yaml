@@ -29,6 +29,7 @@ dependencies:
   # Google Login
   google_sign_in: ^7.2.0
   flutter_native_splash: ^2.4.8
+  firebase_database: ^12.6.1
 
 dev_dependencies:
   flutter_test:

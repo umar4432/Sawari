@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart' as rtdb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -206,25 +207,59 @@ class _SplashScreenState extends State<SplashScreen> {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<Widget> _homeForUser(User user) async {
+    final firestore = FirebaseFirestore.instance;
+    final driverDoc = await firestore.collection('drivers').doc(user.uid).get();
+
+    if (driverDoc.exists) {
+      final driverData = driverDoc.data() ?? <String, dynamic>{};
+      if (driverData['registrationComplete'] == true) {
+        return HomeScreen(
+          initialRole: 'Driver',
+          initialVehicle: driverData['vehicleType']?.toString(),
+        );
+      }
+      return const DriverVehicleScreen();
+    }
+
+    final userDoc = await firestore.collection('users').doc(user.uid).get();
+    final userData = userDoc.data();
+    if (userData?['role'] == 'driver') {
+      return const DriverVehicleScreen();
+    }
+
+    return const HomeScreen();
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState ==
-            ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (!snapshot.hasData) {
-          return const LoginScreen();
-        }
+        final user = snapshot.data;
+        if (user == null) return const LoginScreen();
 
-        return const HomeScreen();
+        return FutureBuilder<Widget>(
+          future: _homeForUser(user),
+          builder: (context, homeSnapshot) {
+            if (homeSnapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (homeSnapshot.hasError) {
+              debugPrint('Account role lookup error: ${homeSnapshot.error}');
+              return const HomeScreen();
+            }
+            return homeSnapshot.data ?? const HomeScreen();
+          },
+        );
       },
     );
   }
@@ -449,264 +484,168 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const lime = Color(0xFFB7FF18);
+    const background = Color(0xFF061116);
+
     return Scaffold(
+      backgroundColor: background,
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF3FFF8),
-              Colors.white,
-            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0C241B), background, Color(0xFF020607)],
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding:
-              const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 30,
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      color: const Color(
-                        0xFFE2F7EA,
-                      ),
-                      borderRadius:
-                      BorderRadius.circular(
-                        26,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.local_taxi_rounded,
-                      size: 45,
-                      color: Color(
-                        0xFF0F9D58,
-                      ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Keep the complete login and account-creation options on screen.
+              final compact = constraints.maxHeight < 760;
+              final tiny = constraints.maxHeight < 650;
+              final gap = tiny ? 5.0 : (compact ? 7.0 : 10.0);
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: constraints.maxWidth < 500 ? 16 : 24,
+                    vertical: tiny ? 3 : (compact ? 6 : 12),
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 460),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: tiny ? 44 : (compact ? 52 : 62),
+                            height: tiny ? 44 : (compact ? 52 : 62),
+                            decoration: BoxDecoration(
+                              color: lime,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(color: lime.withOpacity(0.16), blurRadius: 22, spreadRadius: 1),
+                              ],
+                            ),
+                            child: Icon(Icons.local_taxi_rounded, size: tiny ? 27 : 32, color: background),
+                          ),
+                        ),
+                        SizedBox(height: gap),
+                        Text(
+                          'SAWARI',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: lime, fontSize: tiny ? 25 : (compact ? 28 : 32), fontWeight: FontWeight.w900, letterSpacing: 4),
+                        ),
+                        SizedBox(height: tiny ? 1 : 3),
+                        Text(
+                          'Your ride, your choice.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white70, fontSize: tiny ? 11 : 13, letterSpacing: 0.3),
+                        ),
+                        SizedBox(height: tiny ? 8 : (compact ? 10 : 16)),
+                        Container(
+                          padding: EdgeInsets.all(tiny ? 11 : (compact ? 13 : 18)),
+                          decoration: BoxDecoration(
+                            color: const Color(0xE609171B),
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(color: const Color(0x669CFF16)),
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 8))],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                phoneLoginMode ? 'Login with phone' : 'Welcome back',
+                                style: TextStyle(color: Colors.white, fontSize: tiny ? 19 : (compact ? 21 : 24), fontWeight: FontWeight.w900),
+                              ),
+                              SizedBox(height: tiny ? 2 : 4),
+                              Text(
+                                phoneLoginMode ? 'Enter your number to receive a one-time code.' : 'Sign in to continue your Sawari journey.',
+                                style: TextStyle(color: Colors.white70, fontSize: tiny ? 11 : 12, height: 1.25),
+                              ),
+                              SizedBox(height: tiny ? 8 : 11),
+                              if (!phoneLoginMode) ...[
+                                _inputField(controller: emailController, label: 'Email', hint: 'Enter your email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                                SizedBox(height: gap),
+                                _inputField(
+                                  controller: passwordController,
+                                  label: 'Password',
+                                  hint: 'Enter your password',
+                                  icon: Icons.lock_outline_rounded,
+                                  obscureText: hidePassword,
+                                  suffixIcon: IconButton(
+                                    onPressed: () => setState(() => hidePassword = !hidePassword),
+                                    icon: Icon(hidePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white70),
+                                  ),
+                                ),
+                                SizedBox(height: gap),
+                                _mainButton(text: 'Login', icon: Icons.arrow_forward_rounded, loading: loading, onPressed: _emailLogin),
+                                SizedBox(height: gap),
+                                _outlineButton(text: 'Continue with Google', icon: Icons.g_mobiledata, onPressed: loading ? null : _googleLogin),
+                                SizedBox(height: gap),
+                                _outlineButton(text: 'Login with Phone', icon: Icons.phone_android_rounded, onPressed: loading ? null : () => setState(() => phoneLoginMode = true)),
+                              ] else ...[
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    onPressed: () => setState(() => phoneLoginMode = false),
+                                    icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                                    label: const Text('Back to email login'),
+                                    style: TextButton.styleFrom(foregroundColor: lime, padding: const EdgeInsets.symmetric(vertical: 3)),
+                                  ),
+                                ),
+                                _inputField(controller: phoneController, label: 'Phone Number', hint: '+92 300 1234567', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+                                SizedBox(height: gap),
+                                _mainButton(text: 'Send OTP', icon: Icons.sms_outlined, loading: loading, onPressed: _phoneLogin),
+                                SizedBox(height: gap),
+                                const Text('You can also log in with Email/Password or Google.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, height: 1.25, fontSize: 11)),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: tiny ? 6 : (compact ? 8 : 12)),
+                        Row(children: [
+                          Expanded(child: Divider(color: Colors.white.withOpacity(0.25))),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 10), child: Text('NEW TO SAWARI?', style: TextStyle(color: Colors.white70, fontSize: tiny ? 9 : 10, fontWeight: FontWeight.w800, letterSpacing: 1.2))),
+                          Expanded(child: Divider(color: Colors.white.withOpacity(0.25))),
+                        ]),
+                        SizedBox(height: tiny ? 5 : 7),
+                        SizedBox(
+                          height: tiny ? 38 : (compact ? 42 : 46),
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PassengerRegistrationScreen())),
+                            icon: const Icon(Icons.person_add_alt_1_rounded, size: 19),
+                            label: const Text('Create Passenger Account', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Color(0xFFB7FF18)), backgroundColor: const Color(0x3310171A), padding: const EdgeInsets.symmetric(horizontal: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                          ),
+                        ),
+                        SizedBox(height: tiny ? 5 : 7),
+                        SizedBox(
+                          height: tiny ? 38 : (compact ? 42 : 46),
+                          child: OutlinedButton.icon(
+                            onPressed: loading ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverLoginScreen())),
+                            icon: const Icon(Icons.drive_eta_rounded, color: lime, size: 19),
+                            label: const Text('Driver Login', style: TextStyle(color: lime, fontWeight: FontWeight.w800, fontSize: 12)),
+                            style: OutlinedButton.styleFrom(foregroundColor: lime, side: const BorderSide(color: Color(0xFFB7FF18)), backgroundColor: const Color(0x3310171A), padding: const EdgeInsets.symmetric(horizontal: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                          ),
+                        ),
+                        SizedBox(height: tiny ? 5 : 7),
+                        SizedBox(
+                          height: tiny ? 38 : (compact ? 42 : 46),
+                          child: OutlinedButton.icon(
+                            onPressed: loading ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverAccountRegistrationScreen())),
+                            icon: const Icon(Icons.local_taxi_rounded, color: lime, size: 19),
+                            label: const Text('Create Driver Account', style: TextStyle(color: lime, fontWeight: FontWeight.w800, fontSize: 12)),
+                            style: OutlinedButton.styleFrom(foregroundColor: lime, side: const BorderSide(color: Color(0xFFB7FF18)), backgroundColor: const Color(0x3310171A), padding: const EdgeInsets.symmetric(horizontal: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13))),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  const Text(
-                    'Welcome to Ride App',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 29,
-                      fontWeight:
-                      FontWeight.w900,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  const Text(
-                    'Your ride, your priority.\n'
-                        'Safe, simple and convenient rides '
-                        'for you.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: Colors.black54,
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  if (!phoneLoginMode) ...[
-                    _inputField(
-                      controller:
-                      emailController,
-                      label: 'Email',
-                      hint: 'Enter your email',
-                      icon: Icons.email_outlined,
-                      keyboardType:
-                      TextInputType.emailAddress,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _inputField(
-                      controller:
-                      passwordController,
-                      label: 'Password',
-                      hint: 'Enter your password',
-                      icon: Icons.lock_outline,
-                      obscureText:
-                      hidePassword,
-                      suffixIcon: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            hidePassword =
-                            !hidePassword;
-                          });
-                        },
-                        icon: Icon(
-                          hidePassword
-                              ? Icons.visibility_outlined
-                              : Icons
-                              .visibility_off_outlined,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _mainButton(
-                      text: 'Login',
-                      icon: Icons.login_rounded,
-                      loading: loading,
-                      onPressed:
-                      _emailLogin,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _outlineButton(
-                      text: 'Continue with Google',
-                      icon: Icons.g_mobiledata,
-                      onPressed:
-                      loading
-                          ? null
-                          : _googleLogin,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    _outlineButton(
-                      text: 'Login with Phone',
-                      icon:
-                      Icons.phone_android,
-                      onPressed:
-                      loading
-                          ? null
-                          : () {
-                        setState(() {
-                          phoneLoginMode =
-                          true;
-                        });
-                      },
-                    ),
-                  ] else ...[
-                    Align(
-                      alignment:
-                      Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            phoneLoginMode =
-                            false;
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.arrow_back,
-                        ),
-                        label:
-                        const Text('Back'),
-                      ),
-                    ),
-
-                    const SizedBox(height: 5),
-
-                    _inputField(
-                      controller:
-                      phoneController,
-                      label: 'Phone Number',
-                      hint: '+92 300 1234567',
-                      icon:
-                      Icons.phone_outlined,
-                      keyboardType:
-                      TextInputType.phone,
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _mainButton(
-                      text: 'Send OTP',
-                      icon:
-                      Icons.sms_outlined,
-                      loading: loading,
-                      onPressed:
-                      _phoneLogin,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    const Text(
-                      'Phone number login is optional.\n'
-                          'You can also log in with Email/Password or Google.',
-                      textAlign:
-                      TextAlign.center,
-                      style: TextStyle(
-                        color:
-                        Colors.black54,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 22),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child:
-                        Divider(
-                          color: Colors
-                              .grey.shade300,
-                        ),
-                      ),
-                      const Padding(
-                        padding:
-                        EdgeInsets.symmetric(
-                          horizontal: 12,
-                        ),
-                        child:
-                        Text('OR'),
-                      ),
-                      Expanded(
-                        child:
-                        Divider(
-                          color: Colors
-                              .grey.shade300,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                          const PassengerRegistrationScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'New Passenger? Create Account',
-                      style: TextStyle(
-                        fontWeight:
-                        FontWeight.bold,
-                        color: Color(
-                          0xFF0F9D58,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -714,8 +653,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _inputField({
-    required TextEditingController
-    controller,
+    required TextEditingController controller,
     required String label,
     required String hint,
     required IconData icon,
@@ -727,43 +665,21 @@ class _LoginScreenState extends State<LoginScreen> {
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white, fontSize: 15),
+      cursorColor: const Color(0xFFB7FF18),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon),
+        labelStyle: const TextStyle(color: Colors.white60),
+        hintStyle: const TextStyle(color: Colors.white30),
+        prefixIcon: Icon(icon, color: const Color(0xFFB7FF18)),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.white,
-        contentPadding:
-        const EdgeInsets.symmetric(
-          vertical: 18,
-          horizontal: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
-        enabledBorder:
-        OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: Colors.grey.shade200,
-          ),
-        ),
-        focusedBorder:
-        OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(16),
-          borderSide:
-          const BorderSide(
-            color: Color(0xFF0F9D58),
-            width: 2,
-          ),
-        ),
+        fillColor: const Color(0xFF0A181D),
+        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFB7FF18), width: 1.5)),
       ),
     );
   }
@@ -776,7 +692,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return SizedBox(
       width: double.infinity,
-      height: 55,
+      height: 44,
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: loading
@@ -793,16 +709,16 @@ class _LoginScreenState extends State<LoginScreen> {
         label: Text(
           loading ? 'Please wait...' : text,
           style: const TextStyle(
-            fontSize: 17,
+            fontSize: 14,
             fontWeight:
             FontWeight.bold,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor:
-          const Color(0xFF0F9D58),
+          const Color(0xFFB7FF18),
           foregroundColor:
-          Colors.white,
+          const Color(0xFF061116),
           shape:
           RoundedRectangleBorder(
             borderRadius:
@@ -820,7 +736,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }) {
     return SizedBox(
       width: double.infinity,
-      height: 53,
+      height: 42,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon),
@@ -833,9 +749,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         style: OutlinedButton.styleFrom(
           foregroundColor:
-          Colors.black87,
-          side: BorderSide(
-            color: Colors.grey.shade300,
+          Colors.white,
+          side: const BorderSide(
+            color: Color(0xFFB7FF18),
           ),
           shape:
           RoundedRectangleBorder(
@@ -1221,223 +1137,89 @@ class _PassengerRegistrationScreenState
   }
 
   Widget _field({
-    required TextEditingController
-    controller,
+    required TextEditingController controller,
     required String label,
     required IconData icon,
-    TextInputType? keyboardType,
     bool obscureText = false,
+    TextInputType? keyboardType,
     Widget? suffixIcon,
   }) {
     return TextField(
       controller: controller,
-      keyboardType: keyboardType,
       obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      cursorColor: const Color(0xFFB7FF18),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        labelStyle: const TextStyle(color: Colors.white60),
+        prefixIcon: Icon(icon, color: const Color(0xFFB7FF18)),
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: Colors.grey.shade100,
-        border:
-        OutlineInputBorder(
-          borderRadius:
-          BorderRadius.circular(16),
-          borderSide:
-          BorderSide.none,
-        ),
+        fillColor: const Color(0xFF0A181D),
+        contentPadding: const EdgeInsets.symmetric(vertical: 17, horizontal: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFB7FF18), width: 1.5)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    const lime = Color(0xFFB7FF18);
     return Scaffold(
+      backgroundColor: const Color(0xFF061116),
       appBar: AppBar(
-        title: const Text(
-          'Create Passenger Account',
-        ),
-        centerTitle: true,
+        backgroundColor: const Color(0xFF061116),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('Passenger Signup', style: TextStyle(fontWeight: FontWeight.w900)),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding:
-          const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Container(
-                width: 85,
-                height: 85,
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(
-                    0xFFE2F7EA,
-                  ),
-                  borderRadius:
-                  BorderRadius.circular(
-                    27,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.person_add_alt_1,
-                  size: 45,
-                  color:
-                  Color(0xFF0F9D58),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                'Join Ride App',
-                style: TextStyle(
-                  fontSize: 29,
-                  fontWeight:
-                  FontWeight.w900,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              const Text(
-                'Create your passenger account\n'
-                    'and start your journey.',
-                textAlign:
-                TextAlign.center,
-                style: TextStyle(
-                  color:
-                  Colors.black54,
-                  height: 1.4,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              _field(
-                controller:
-                nameController,
-                label: 'Full Name',
-                icon:
-                Icons.person_outline,
-              ),
-
-              const SizedBox(height: 14),
-
-              _field(
-                controller:
-                emailController,
-                label: 'Email',
-                icon:
-                Icons.email_outlined,
-                keyboardType:
-                TextInputType.emailAddress,
-              ),
-
-              const SizedBox(height: 14),
-
-              _field(
-                controller:
-                phoneController,
-                label:
-                'Phone Number',
-                icon:
-                Icons.phone_outlined,
-                keyboardType:
-                TextInputType.phone,
-              ),
-
-              const SizedBox(height: 14),
-
-              _field(
-                controller:
-                passwordController,
-                label: 'Password',
-                icon:
-                Icons.lock_outline,
-                obscureText:
-                hidePassword,
-                suffixIcon:
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      hidePassword =
-                      !hidePassword;
-                    });
-                  },
-                  icon: Icon(
-                    hidePassword
-                        ? Icons
-                        .visibility_outlined
-                        : Icons
-                        .visibility_off_outlined,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child:
-                ElevatedButton(
-                  onPressed:
-                  loading
-                      ? null
-                      : _register,
-                  style:
-                  ElevatedButton
-                      .styleFrom(
-                    backgroundColor:
-                    const Color(
-                      0xFF0F9D58,
-                    ),
-                    foregroundColor:
-                    Colors.white,
-                    shape:
-                    RoundedRectangleBorder(
-                      borderRadius:
-                      BorderRadius
-                          .circular(
-                        16,
+      body: Container(
+        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0C241B), Color(0xFF061116), Color(0xFF020607)])),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: const Color(0xE609171B), borderRadius: BorderRadius.circular(26), border: Border.all(color: const Color(0x449CFF16))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(child: Container(width: 58, height: 58, decoration: BoxDecoration(color: lime, borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.person_add_alt_1_rounded, size: 32, color: Color(0xFF061116)))),
+                      const SizedBox(height: 10),
+                      const Text('Join SAWARI', textAlign: TextAlign.center, style: TextStyle(color: lime, fontSize: 29, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                      const SizedBox(height: 8),
+                      const Text('Create your passenger account and start your journey.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, height: 1.45)),
+                      const SizedBox(height: 14),
+                      _field(controller: nameController, label: 'Full Name', icon: Icons.person_outline_rounded),
+                      const SizedBox(height: 8),
+                      _field(controller: emailController, label: 'Email', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                      const SizedBox(height: 8),
+                      _field(controller: phoneController, label: 'Phone Number', icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+                      const SizedBox(height: 8),
+                      _field(controller: passwordController, label: 'Password', icon: Icons.lock_outline_rounded, obscureText: hidePassword, suffixIcon: IconButton(onPressed: () => setState(() => hidePassword = !hidePassword), icon: Icon(hidePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white54))),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: loading ? null : _register,
+                          style: ElevatedButton.styleFrom(backgroundColor: lime, foregroundColor: const Color(0xFF061116), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                          child: loading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF061116))) : const Text('Create Passenger Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+                        ),
                       ),
-                    ),
-                  ),
-                  child: loading
-                      ? const CircularProgressIndicator(
-                    color:
-                    Colors.white,
-                  )
-                      : const Text(
-                    'Create Passenger Account',
-                    style:
-                    TextStyle(
-                      fontSize:
-                      16,
-                      fontWeight:
-                      FontWeight
-                          .bold,
-                    ),
+                      const SizedBox(height: 12),
+                      TextButton(onPressed: loading ? null : () => Navigator.pop(context), style: TextButton.styleFrom(foregroundColor: lime), child: const Text('Already have an account? Login')),
+                    ],
                   ),
                 ),
               ),
-
-              const SizedBox(height: 12),
-
-              TextButton(
-                onPressed: loading
-                    ? null
-                    : () {
-                  Navigator.pop(
-                    context,
-                  );
-                },
-                child: const Text(
-                  'Already have an account? Login',
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1733,6 +1515,21 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
     final user = FirebaseAuth.instance.currentUser;
     name.text = user?.displayName ?? '';
     phone.text = user?.phoneNumber ?? '';
+    _loadDriverAccountDetails();
+  }
+
+  Future<void> _loadDriverAccountDetails() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final data = doc.data();
+      if (!mounted || data == null) return;
+      if (name.text.trim().isEmpty) name.text = data['name']?.toString() ?? '';
+      if (phone.text.trim().isEmpty) phone.text = data['phone']?.toString() ?? '';
+    } catch (e) {
+      debugPrint('Driver account details load error: $e');
+    }
   }
 
   Future<void> submit() async {
@@ -1741,9 +1538,11 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
     if (user == null) return;
     setState(() => saving = true);
     try {
-      await FirebaseFirestore.instance.collection('drivers').doc(user.uid).set({
+      await user.updateDisplayName(name.text.trim());
+      final driverData = <String, dynamic>{
         'uid': user.uid,
         'name': name.text.trim(),
+        'email': user.email ?? '',
         'phone': phone.text.trim(),
         'address': address.text.trim(),
         'licenseNumber': license.text.trim(),
@@ -1752,18 +1551,40 @@ class _DriverRegistrationScreenState extends State<DriverRegistrationScreen> {
         'vehicleNumber': vehicleNumber.text.trim(),
         'vehicleModel': model.text.trim(),
         'vehicleColor': color.text.trim(),
+        'role': 'driver',
         'isOnline': false,
         'registrationComplete': true,
+        'verificationRequired': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await FirebaseFirestore.instance.collection('drivers').doc(user.uid).set(
+        driverData,
+        SetOptions(merge: true),
+      );
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name.text.trim(),
+        'email': user.email ?? '',
+        'phone': phone.text.trim(),
+        'role': 'driver',
+        'accountType': 'driver',
+        'driverRegistrationComplete': true,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => HomeScreen(initialRole: 'Driver', initialVehicle: widget.vehicle)),
-            (route) => route.isFirst,
+            (route) => false,
       );
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registration could not be saved.')));
+      debugPrint('Driver profile Firestore save error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Driver details save nahi huay: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -1900,6 +1721,305 @@ class _RatingScreenState extends State<RatingScreen> {
    HOME SCREEN
    EXISTING RIDE APP FUNCTIONALITY
 ============================================================ */
+
+/* ============================================================
+   SEPARATE DRIVER LOGIN
+============================================================ */
+
+class DriverLoginScreen extends StatefulWidget {
+  const DriverLoginScreen({super.key});
+  @override
+  State<DriverLoginScreen> createState() => _DriverLoginScreenState();
+}
+
+class _DriverLoginScreenState extends State<DriverLoginScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool loading = false;
+  bool hidePassword = true;
+
+  Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      _show('Email aur password enter karein.');
+      return;
+    }
+    setState(() => loading = true);
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email, password: password,
+      );
+      final user = credential.user;
+      if (user == null) throw Exception('User account nahi mila.');
+      final driverDoc = await FirebaseFirestore.instance.collection('drivers').doc(user.uid).get();
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final driverRole = driverDoc.exists || userDoc.data()?['role'] == 'driver' || userDoc.data()?['accountType'] == 'driver';
+      if (!driverRole) {
+        await FirebaseAuth.instance.signOut();
+        if (mounted) _show('Yeh driver account nahi hai. Passenger Login use karein.');
+      }
+      // On successful driver login, AuthGate listens to FirebaseAuth and opens
+      // the existing driver flow based on the saved role; no duplicate dashboard is created.
+    } on FirebaseAuthException catch (e) {
+      if (mounted) _show(_error(e));
+    } catch (e) {
+      debugPrint('Driver login error: $e');
+      if (mounted) _show('Login complete nahi hua. Internet aur Firebase settings check karein.');
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  String _error(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email': return 'Email address valid nahi hai.';
+      case 'user-not-found': return 'Is email par account nahi mila.';
+      case 'wrong-password':
+      case 'invalid-credential': return 'Email ya password ghalat hai.';
+      case 'network-request-failed': return 'Internet connection check karein.';
+      default: return e.message ?? 'Driver login fail ho gaya.';
+    }
+  }
+
+  void _show(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(behavior: SnackBarBehavior.floating, content: Text(text)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const lime = Color(0xFFB7FF18);
+    const bg = Color(0xFF061116);
+    return Scaffold(
+      backgroundColor: bg,
+      appBar: AppBar(backgroundColor: bg, foregroundColor: Colors.white, elevation: 0, title: const Text('Driver Login', style: TextStyle(fontWeight: FontWeight.w900))),
+      body: Container(
+        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0C241B), bg, Color(0xFF020607)])),
+        child: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+          final compact = constraints.maxHeight < 650;
+          return Center(child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 22, vertical: compact ? 6 : 18),
+            child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 440), child: Container(
+              padding: EdgeInsets.all(compact ? 18 : 24),
+              decoration: BoxDecoration(color: const Color(0xE609171B), borderRadius: BorderRadius.circular(26), border: Border.all(color: const Color(0x669CFF16)), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 22, offset: Offset(0, 8))]),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Center(child: Container(width: 68, height: 68, decoration: BoxDecoration(color: lime, borderRadius: BorderRadius.circular(22)), child: const Icon(Icons.local_taxi_rounded, size: 38, color: bg))),
+                const SizedBox(height: 15),
+                const Text('Welcome, Driver', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 6),
+                const Text('Sign in to continue driving with SAWARI.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, height: 1.4)),
+                SizedBox(height: compact ? 18 : 26),
+                TextField(controller: emailController, keyboardType: TextInputType.emailAddress, autofillHints: const [AutofillHints.email], style: const TextStyle(color: Colors.white), decoration: _dec('Email Address', Icons.email_outlined)),
+                const SizedBox(height: 13),
+                TextField(controller: passwordController, obscureText: hidePassword, autofillHints: const [AutofillHints.password], style: const TextStyle(color: Colors.white), decoration: _dec('Password', Icons.lock_outline_rounded).copyWith(suffixIcon: IconButton(onPressed: () => setState(() => hidePassword = !hidePassword), icon: Icon(hidePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white60)))),
+                SizedBox(height: compact ? 16 : 22),
+                SizedBox(height: 52, child: ElevatedButton.icon(onPressed: loading ? null : _login, icon: loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: bg)) : const Icon(Icons.arrow_forward_rounded), label: Text(loading ? 'Please wait...' : 'Login as Driver', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)), style: ElevatedButton.styleFrom(backgroundColor: lime, foregroundColor: bg, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))))),
+                const SizedBox(height: 12),
+                TextButton(onPressed: loading ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DriverAccountRegistrationScreen())), style: TextButton.styleFrom(foregroundColor: lime), child: const Text('New driver? Create an account')),
+                TextButton(onPressed: loading ? null : () => Navigator.pop(context), style: TextButton.styleFrom(foregroundColor: Colors.white70), child: const Text('Back to main login')),
+              ]),
+            )),
+          ));
+        })),
+      ),
+    );
+  }
+
+  InputDecoration _dec(String label, IconData icon) => InputDecoration(
+    labelText: label, labelStyle: const TextStyle(color: Colors.white60), prefixIcon: Icon(icon, color: const Color(0xFFB7FF18)),
+    filled: true, fillColor: const Color(0xFF0A181D), contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Colors.white12)),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFB7FF18), width: 1.5)),
+  );
+
+  @override
+  void dispose() { emailController.dispose(); passwordController.dispose(); super.dispose(); }
+}
+
+/* ============================================================
+   DRIVER ACCOUNT SIGNUP
+============================================================ */
+
+class DriverAccountRegistrationScreen extends StatefulWidget {
+  const DriverAccountRegistrationScreen({super.key});
+
+  @override
+  State<DriverAccountRegistrationScreen> createState() =>
+      _DriverAccountRegistrationScreenState();
+}
+
+class _DriverAccountRegistrationScreenState
+    extends State<DriverAccountRegistrationScreen> {
+  final formKey = GlobalKey<FormState>();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool loading = false;
+  bool hidePassword = true;
+
+  Future<void> _createDriverAccount() async {
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final phone = phoneController.text.trim();
+    final password = passwordController.text;
+
+    setState(() => loading = true);
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = credential.user;
+      if (user == null) throw Exception('Driver account could not be created.');
+
+      await user.updateDisplayName(name);
+      final now = FieldValue.serverTimestamp();
+      // Save a driver record immediately, so AuthGate can identify this account
+      // as a driver even before the vehicle/profile onboarding is completed.
+      await FirebaseFirestore.instance.collection('drivers').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'role': 'driver',
+        'isOnline': false,
+        'registrationComplete': false,
+        'verificationRequired': false,
+        'createdAt': now,
+        'updatedAt': now,
+      }, SetOptions(merge: true));
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'role': 'driver',
+        'accountType': 'driver',
+        'driverRegistrationComplete': false,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const DriverVehicleScreen()),
+            (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (mounted) _showMessage(_authError(e));
+    } catch (e) {
+      debugPrint('Driver account creation error: $e');
+      if (mounted) {
+        _showMessage('Account create nahi ho saka. Internet aur Firebase settings check karein.');
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  String _authError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'Email address valid nahi hai.';
+      case 'email-already-in-use':
+        return 'Is email par pehle se account bana hua hai. Login karein.';
+      case 'weak-password':
+        return 'Password kam az kam 6 characters ka hona chahiye.';
+      case 'network-request-failed':
+        return 'Internet connection check karein.';
+      default:
+        return e.message ?? 'Driver account create nahi ho saka.';
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  InputDecoration _decoration(String label, IconData icon) => InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon, color: const Color(0xFFB7FF18)),
+    filled: true,
+    fillColor: const Color(0xFF0A181D),
+    labelStyle: const TextStyle(color: Colors.white60),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Colors.white12),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Color(0xFFB7FF18), width: 1.5),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Colors.redAccent),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Colors.redAccent),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    const lime = Color(0xFFB7FF18);
+    return Scaffold(
+      backgroundColor: const Color(0xFF061116),
+      appBar: AppBar(backgroundColor: const Color(0xFF061116), foregroundColor: Colors.white, elevation: 0, title: const Text('Driver Signup', style: TextStyle(fontWeight: FontWeight.w900))),
+      body: Container(
+        decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0C241B), Color(0xFF061116), Color(0xFF020607)])),
+        child: SafeArea(
+          child: Form(
+            key: formKey,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF0C3D2B), Color(0xFF071B20)]), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0x669CFF16))),
+                  child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.local_taxi_rounded, color: lime, size: 44), SizedBox(height: 14), Text('Drive with SAWARI', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900)), SizedBox(height: 7), Text('Create your driver login, then add your vehicle and profile details.', style: TextStyle(color: Colors.white70, height: 1.45))]),
+                ),
+                const SizedBox(height: 22),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: const Color(0xE609171B), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white12)),
+                  child: Column(children: [
+                    TextFormField(controller: nameController, textCapitalization: TextCapitalization.words, style: const TextStyle(color: Colors.white), decoration: _decoration('Full Name', Icons.person_outline_rounded), validator: (v) => v == null || v.trim().isEmpty ? 'Full name required hai.' : null),
+                    const SizedBox(height: 14),
+                    TextFormField(controller: emailController, keyboardType: TextInputType.emailAddress, autofillHints: const [AutofillHints.email], style: const TextStyle(color: Colors.white), decoration: _decoration('Email Address', Icons.email_outlined), validator: (v) { final value = v?.trim() ?? ''; if (value.isEmpty || !value.contains('@') || !value.contains('.')) return 'Valid email enter karein.'; return null; }),
+                    const SizedBox(height: 14),
+                    TextFormField(controller: phoneController, keyboardType: TextInputType.phone, style: const TextStyle(color: Colors.white), decoration: _decoration('Phone Number', Icons.phone_outlined), validator: (v) => v == null || v.trim().isEmpty ? 'Phone number required hai.' : null),
+                    const SizedBox(height: 14),
+                    TextFormField(controller: passwordController, obscureText: hidePassword, style: const TextStyle(color: Colors.white), decoration: _decoration('Password', Icons.lock_outline_rounded).copyWith(suffixIcon: IconButton(onPressed: () => setState(() => hidePassword = !hidePassword), icon: Icon(hidePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: Colors.white54))), validator: (v) => v == null || v.length < 6 ? 'Password kam az kam 6 characters ka hona chahiye.' : null),
+                    const SizedBox(height: 22),
+                    SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: loading ? null : _createDriverAccount, style: ElevatedButton.styleFrom(backgroundColor: lime, foregroundColor: const Color(0xFF061116), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17))), child: loading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF061116))) : const Text('Create Driver Account', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)))),
+                    const SizedBox(height: 12),
+                    const Text('Email/password account will be created without phone, CNIC or license verification for now.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+}
 
 /* ============================================================
    DRIVER LANDING / ONBOARDING
@@ -2570,6 +2690,14 @@ class _HomeScreenState
   final FirebaseFirestore firestore =
       FirebaseFirestore.instance;
 
+  // Realtime Database for live ride requests. Existing Firestore flows remain
+  // in place for ride history and passenger status screens.
+  final rtdb.FirebaseDatabase realtimeDatabase = rtdb.FirebaseDatabase.instanceFor(
+    app: Firebase.app(),
+    databaseURL: 'https://ride-app-61076-default-rtdb.firebaseio.com',
+  );
+  StreamSubscription<rtdb.DatabaseEvent>? _rideRequestsSubscription;
+
   GoogleMapController? mapController;
 
   static const LatLng defaultLocation =
@@ -2728,80 +2856,59 @@ class _HomeScreenState
 
   Future<void> _checkDriverStatus() async {
     final user = currentUser;
-
     if (user == null) return;
 
     try {
-      final doc = await firestore
-          .collection('drivers')
-          .doc(user.uid)
-          .get();
+      final snapshot = await realtimeDatabase.ref('drivers/${user.uid}').get();
+      if (snapshot.exists && snapshot.value is Map) {
+        final data = Map<String, dynamic>.from(snapshot.value as Map);
+        if (mounted) setState(() => driverOnline = data['isOnline'] == true);
+        return;
+      }
 
-      if (doc.exists) {
-        final data = doc.data();
-
-        if (mounted) {
-          setState(() {
-            driverOnline =
-                data?['isOnline'] == true;
-          });
-        }
+      // Backward-compatible fallback for drivers already saved in Firestore.
+      final doc = await firestore.collection('drivers').doc(user.uid).get();
+      if (doc.exists && mounted) {
+        setState(() => driverOnline = doc.data()?['isOnline'] == true);
       }
     } catch (e) {
-      debugPrint(
-        'Driver status check error: $e',
-      );
+      debugPrint('Driver status check error: $e');
     }
   }
 
   Future<void> _toggleDriverOnline() async {
     final user = currentUser;
-
     if (user == null) {
-      _showMessage(
-        'Please login first.',
-      );
+      _showMessage('Please login first.');
       return;
     }
 
     try {
-      final newStatus =
-      !driverOnline;
-
-      await firestore
-          .collection('drivers')
-          .doc(user.uid)
-          .set(
-        {
-          'uid': user.uid,
-          'isOnline': newStatus,
-          'updatedAt':
-          FieldValue
-              .serverTimestamp(),
-        },
-        SetOptions(
-          merge: true,
-        ),
-      );
+      final newStatus = !driverOnline;
+      final driverData = <String, dynamic>{
+        'uid': user.uid,
+        'isOnline': newStatus,
+        'updatedAt': rtdb.ServerValue.timestamp,
+      };
+      await realtimeDatabase.ref('drivers/${user.uid}').update(driverData);
+      // Keep Firestore in sync for existing screens/features.
+      await firestore.collection('drivers').doc(user.uid).set({
+        'uid': user.uid,
+        'isOnline': newStatus,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
-
-      setState(() {
-        driverOnline =
-            newStatus;
-      });
-
-      _showMessage(
-        newStatus
-            ? 'Driver Online hai. Ride requests receive hongi.'
-            : 'Driver Offline hai.',
-      );
+      setState(() => driverOnline = newStatus);
+      if (newStatus && selectedRole == 'Driver') {
+        _listenForRideRequests();
+      }
+      _showMessage(newStatus
+          ? 'Driver Online hai. Ride requests receive hongi.'
+          : 'Driver Offline hai.');
     } catch (e) {
-      debugPrint('$e');
-
-      _showMessage(
-        'Driver status update nahi ho saka.',
-      );
+      debugPrint('Driver status update error: $e');
+      _showMessage('Driver status update nahi ho saka. Firebase Rules check karein.');
     }
   }
 
@@ -3097,40 +3204,28 @@ class _HomeScreenState
   ============================================================ */
 
   void _listenForRideRequests() {
-    firestore
-        .collection('rides')
-        .where(
-      'status',
-      isEqualTo: 'searching',
-    )
-        .snapshots()
-        .listen((snapshot) {
-      if (!mounted) return;
+    _rideRequestsSubscription?.cancel();
+    _rideRequestsSubscription = realtimeDatabase
+        .ref('rideRequests')
+        .onValue
+        .listen((event) {
+      if (!mounted || selectedRole != 'Driver' || !driverOnline) return;
+      final value = event.snapshot.value;
+      if (value is! Map) return;
 
-      if (selectedRole !=
-          'Driver') {
+      for (final entry in value.entries) {
+        if (entry.value is! Map) continue;
+        final rideData = Map<String, dynamic>.from(entry.value as Map);
+        if (rideData['status'] != 'searching') continue;
+        if (rideData['rejectedBy'] is Map &&
+            (rideData['rejectedBy'] as Map).containsKey(currentUser?.uid)) continue;
+        if (rideNotificationShown) return;
+        rideNotificationShown = true;
+        _showRideNotification(entry.key.toString(), rideData);
         return;
       }
-
-      if (!driverOnline) return;
-
-      if (snapshot.docs.isEmpty) {
-        return;
-      }
-
-      final ride =
-          snapshot.docs.first;
-
-      if (rideNotificationShown) {
-        return;
-      }
-
-      rideNotificationShown =
-      true;
-
-      _showRideNotification(
-        ride,
-      );
+    }, onError: (Object error) {
+      debugPrint('Realtime ride listener error: $error');
     });
   }
 
@@ -3138,99 +3233,117 @@ class _HomeScreenState
      DRIVER NOTIFICATION
   ============================================================ */
 
-  void _showRideNotification(
-      QueryDocumentSnapshot ride,
-      ) {
-    final data =
-    ride.data()
-    as Map<String, dynamic>;
-
-    final pickup =
-        data['pickup'] ??
-            'Pickup';
-
-    final destination =
-        data['destination'] ??
-            'Destination';
-
-    final fare =
-        data['fare'] ?? 0;
+  void _showRideNotification(String rideId, Map<String, dynamic> data) {
+    final pickup = data['pickup'] ?? 'Pickup';
+    final destination = data['destination'] ?? 'Destination';
+    final fare = data['fare'] ?? 0;
+    final rideType = data['rideType'] ?? 'Ride';
+    final passengerName = data['passengerName'] ?? 'Passenger';
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(
-                Icons
-                    .notifications_active,
-                color:
-                Colors.green,
-              ),
-              SizedBox(width: 10),
-              Text('New Ride!'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize:
-            MainAxisSize.min,
-            crossAxisAlignment:
-            CrossAxisAlignment
-                .start,
-            children: [
-              Text(
-                '$pickup → $destination',
-                style:
-                const TextStyle(
-                  fontWeight:
-                  FontWeight.bold,
-                ),
-              ),
-              const SizedBox(
-                height: 12,
-              ),
-              Text(
-                'Passenger Offer: Rs. $fare',
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                rideNotificationShown =
-                false;
-
-                Navigator.pop(
-                  dialogContext,
-                );
-              },
-              child:
-              const Text('Later'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                );
-
-                rideNotificationShown =
-                false;
-
-                _acceptRide(
-                  ride.id,
-                );
-              },
-              child:
-              const Text(
-                'Accept Ride',
-              ),
-            ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(children: [
+          Icon(Icons.notifications_active, color: Colors.green),
+          SizedBox(width: 10),
+          Expanded(child: Text('New Ride Request')),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Passenger: $passengerName'),
+            const SizedBox(height: 6),
+            Text('$pickup → $destination', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 6),
+            Text('Ride type: $rideType'),
+            Text('Passenger offer: Rs. $fare'),
           ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              rideNotificationShown = false;
+              final uid = currentUser?.uid;
+              if (uid != null) {
+                await realtimeDatabase.ref('rideRequests/$rideId/rejectedBy/$uid').set(true);
+              }
+            },
+            child: const Text('Reject'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              rideNotificationShown = false;
+              _showOfferFareDialog(rideId, fare);
+            },
+            child: const Text('Offer Fare'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              rideNotificationShown = false;
+              _acceptRide(rideId);
+            },
+            child: const Text('Accept'),
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> _showOfferFareDialog(String rideId, dynamic passengerFare) async {
+    final controller = TextEditingController(text: passengerFare.toString());
+    final offeredFare = await showDialog<double>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Offer Your Fare'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: 'Your fare (PKR)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+              final value = double.tryParse(controller.text.trim());
+              if (value != null && value > 0) Navigator.pop(dialogContext, value);
+            },
+            child: const Text('Send Offer'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (offeredFare == null || currentUser == null) return;
+
+    try {
+      final user = currentUser!;
+      final offer = <String, dynamic>{
+        'driverId': user.uid,
+        'driverName': user.displayName ?? 'Driver',
+        'fare': offeredFare,
+        'status': 'pending',
+        'createdAt': rtdb.ServerValue.timestamp,
+      };
+      await realtimeDatabase.ref('rideRequests/$rideId/offers/${user.uid}').set(offer);
+      await firestore.collection('rides').doc(rideId).set({
+        'driverOffers': {user.uid: {
+          'driverId': user.uid,
+          'driverName': user.displayName ?? 'Driver',
+          'fare': offeredFare,
+          'status': 'pending',
+        }},
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      _showMessage('Fare offer passenger ko send kar di gayi.');
+    } catch (e) {
+      debugPrint('Offer fare error: $e');
+      _showMessage('Fare offer send nahi ho saki. Firebase Rules check karein.');
+    }
   }
 
   /* ============================================================
@@ -3239,102 +3352,75 @@ class _HomeScreenState
 
   Future<void> _createRideRequest() async {
     final user = currentUser;
-
     if (user == null) {
-      _showMessage(
-        'Please login first.',
-      );
+      _showMessage('Please login first.');
       return;
     }
 
-    final pickup =
-    pickupController.text.trim();
-
-    final destination =
-    destinationController.text.trim();
-
-    final fareText =
-    fareController.text.trim();
-
-    if (pickup.isEmpty ||
-        destination.isEmpty) {
-      _showMessage(
-        'Enter pickup and destination.',
-      );
+    final pickup = pickupController.text.trim();
+    final destination = destinationController.text.trim();
+    final fareText = fareController.text.trim();
+    if (pickup.isEmpty || destination.isEmpty) {
+      _showMessage('Enter pickup and destination.');
       return;
     }
-
-    final fare =
-    double.tryParse(
-      fareText,
-    );
-
-    if (fare == null ||
-        fare <= 0) {
-      _showMessage(
-        'Enter a valid fare.',
-      );
+    final fare = double.tryParse(fareText);
+    if (fare == null || fare <= 0) {
+      _showMessage('Enter a valid fare.');
       return;
     }
 
     try {
-      final rideRef =
-      await firestore
-          .collection('rides')
-          .add({
-        'passengerId':
-        user.uid,
-        'passengerName':
-        user.displayName ??
-            'Passenger',
-        'passengerEmail':
-        user.email ?? '',
+      // Keep the existing Firestore ride document so history and passenger
+      // status screens continue to work, and mirror the same ride to RTDB.
+      final rideRef = firestore.collection('rides').doc();
+      final rideData = <String, dynamic>{
+        'passengerId': user.uid,
+        'passengerName': user.displayName ?? 'Passenger',
+        'passengerEmail': user.email ?? '',
         'pickup': pickup,
-        'destination':
-        destination,
-        'pickupLat':
-        currentLocation
-            .latitude,
-        'pickupLng':
-        currentLocation
-            .longitude,
-        'rideType':
-        selectedRide,
+        'destination': destination,
+        'pickupLat': currentLocation.latitude,
+        'pickupLng': currentLocation.longitude,
+        'rideType': selectedRide,
         'fare': fare,
         'currency': 'PKR',
         'status': 'searching',
         'driverId': null,
         'driverName': null,
-        'createdAt':
-        FieldValue
-            .serverTimestamp(),
-        'updatedAt':
-        FieldValue
-            .serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await rideRef.set(rideData);
+      // Publish only the fields drivers need to decide whether to accept.
+      // Passenger email and other private fields stay in Firestore.
+      await realtimeDatabase.ref('rideRequests/${rideRef.id}').set({
+        'rideId': rideRef.id,
+        'passengerId': user.uid,
+        'passengerName': user.displayName ?? 'Passenger',
+        'pickup': pickup,
+        'destination': destination,
+        'pickupLat': currentLocation.latitude,
+        'pickupLng': currentLocation.longitude,
+        'rideType': selectedRide,
+        'fare': fare,
+        'currency': 'PKR',
+        'status': 'searching',
+        'driverId': null,
+        'driverName': null,
+        'createdAt': rtdb.ServerValue.timestamp,
+        'updatedAt': rtdb.ServerValue.timestamp,
+        'rejectedBy': <String, bool>{},
+        'offers': <String, dynamic>{},
       });
 
       if (!mounted) return;
-
-      setState(() {
-        activeRideId =
-            rideRef.id;
-      });
-
-      _showMessage(
-        'Ride request send ho gayi.',
-      );
-
-      _showPassengerStatus(
-        rideRef.id,
-      );
+      setState(() => activeRideId = rideRef.id);
+      _showMessage('Ride request send ho gayi.');
+      _showPassengerStatus(rideRef.id);
     } catch (e) {
-      debugPrint(
-        'Create ride error: $e',
-      );
-
-      _showMessage(
-        'Ride request send nahi ho saki.',
-      );
+      debugPrint('Create ride error: $e');
+      _showMessage('Ride request send nahi ho saki. Firebase Rules check karein.');
     }
   }
 
@@ -3342,81 +3428,55 @@ class _HomeScreenState
      ACCEPT RIDE
   ============================================================ */
 
-  Future<void> _acceptRide(
-      String rideId,
-      ) async {
+  Future<void> _acceptRide(String rideId) async {
     final user = currentUser;
-
     if (user == null) {
-      _showMessage(
-        'Driver login required.',
-      );
+      _showMessage('Driver login required.');
       return;
     }
 
     try {
-      await firestore
-          .collection('rides')
-          .doc(rideId)
-          .update({
-        'status': 'accepted',
-        'driverId':
-        user.uid,
-        'driverName':
-        user.displayName ??
-            'Driver',
-        'driverPhone':
-        user.phoneNumber ?? '',
-        'acceptedAt':
-        FieldValue
-            .serverTimestamp(),
-        'updatedAt':
-        FieldValue
-            .serverTimestamp(),
+      final rideRef = realtimeDatabase.ref('rideRequests/$rideId');
+      final result = await rideRef.runTransaction((currentData) {
+        if (currentData is! Map) return rtdb.Transaction.abort();
+        final data = Map<String, dynamic>.from(currentData);
+        if (data['status'] != 'searching') return rtdb.Transaction.abort();
+        data['status'] = 'accepted';
+        data['driverId'] = user.uid;
+        data['driverName'] = user.displayName ?? 'Driver';
+        data['driverPhone'] = user.phoneNumber ?? '';
+        data['acceptedAt'] = rtdb.ServerValue.timestamp;
+        data['updatedAt'] = rtdb.ServerValue.timestamp;
+        return rtdb.Transaction.success(data);
       });
 
-      final rideDoc =
-      await firestore
-          .collection('rides')
-          .doc(rideId)
-          .get();
-
-      final data =
-      rideDoc.data();
-
-      if (data != null) {
-        final pickupLat =
-        (data['pickupLat']
-        as num?)
-            ?.toDouble();
-
-        final pickupLng =
-        (data['pickupLng']
-        as num?)
-            ?.toDouble();
-
-        if (pickupLat != null &&
-            pickupLng != null) {
-          _showRideOnMap(
-            LatLng(
-              pickupLat,
-              pickupLng,
-            ),
-          );
-        }
+      if (!result.committed) {
+        _showMessage('Yeh ride kisi aur driver ne accept kar li hai.');
+        return;
       }
 
-      _showMessage(
-        'Ride accepted successfully.',
-      );
-    } catch (e) {
-      debugPrint(
-        'Accept ride error: $e',
-      );
+      await firestore.collection('rides').doc(rideId).update({
+        'status': 'accepted',
+        'driverId': user.uid,
+        'driverName': user.displayName ?? 'Driver',
+        'driverPhone': user.phoneNumber ?? '',
+        'acceptedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-      _showMessage(
-        'Unable to accept ride.',
-      );
+      final data = result.snapshot.value;
+      if (data is Map) {
+        final rideData = Map<String, dynamic>.from(data);
+        final pickupLat = (rideData['pickupLat'] as num?)?.toDouble();
+        final pickupLng = (rideData['pickupLng'] as num?)?.toDouble();
+        if (pickupLat != null && pickupLng != null) {
+          _showRideOnMap(LatLng(pickupLat, pickupLng));
+        }
+      }
+      _showMessage('Ride accepted successfully.');
+    } catch (e) {
+      debugPrint('Accept ride error: $e');
+      _showMessage('Unable to accept ride. Firebase Rules check karein.');
     }
   }
 
@@ -5423,6 +5483,7 @@ class _HomeScreenState
   @override
   void dispose() {
     _placesDebounce?.cancel();
+    _rideRequestsSubscription?.cancel();
     pickupController.dispose();
     destinationController.dispose();
     fareController.dispose();
