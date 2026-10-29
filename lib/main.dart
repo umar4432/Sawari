@@ -2463,37 +2463,7 @@ class _DriverVehicleScreenState extends State<DriverVehicleScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    final vehicle = selected ?? 'Car';
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => HomeScreen(
-                          initialRole: 'Driver',
-                          initialVehicle: vehicle,
-                          demoDriverMode: true,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.science_rounded, size: 19),
-                  label: const Text(
-                    'Demo Driver Mode',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFB7FF18),
-                    side: const BorderSide(color: Color(0xFFB7FF18), width: 1.3),
-                    backgroundColor: const Color(0x2210FF70),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                  ),
-                ),
-              ),
+
             ],
           ),
         ),
@@ -3219,9 +3189,8 @@ class _HomeScreenState
         if (rideData['status'] != 'searching') continue;
         if (rideData['rejectedBy'] is Map &&
             (rideData['rejectedBy'] as Map).containsKey(currentUser?.uid)) continue;
-        if (rideNotificationShown) return;
-        rideNotificationShown = true;
-        _showRideNotification(entry.key.toString(), rideData);
+        // Ride requests are shown in the driver's live list panel instead of
+        // opening a blocking popup for every incoming request.
         return;
       }
     }, onError: (Object error) {
@@ -3380,8 +3349,10 @@ class _HomeScreenState
         'passengerEmail': user.email ?? '',
         'pickup': pickup,
         'destination': destination,
-        'pickupLat': currentLocation.latitude,
-        'pickupLng': currentLocation.longitude,
+        'pickupLat': (_selectedPickupLocation ?? currentLocation).latitude,
+        'pickupLng': (_selectedPickupLocation ?? currentLocation).longitude,
+        'destinationLat': _selectedDestinationLocation?.latitude,
+        'destinationLng': _selectedDestinationLocation?.longitude,
         'rideType': selectedRide,
         'fare': fare,
         'currency': 'PKR',
@@ -3400,8 +3371,10 @@ class _HomeScreenState
         'passengerName': user.displayName ?? 'Passenger',
         'pickup': pickup,
         'destination': destination,
-        'pickupLat': currentLocation.latitude,
-        'pickupLng': currentLocation.longitude,
+        'pickupLat': (_selectedPickupLocation ?? currentLocation).latitude,
+        'pickupLng': (_selectedPickupLocation ?? currentLocation).longitude,
+        'destinationLat': _selectedDestinationLocation?.latitude,
+        'destinationLng': _selectedDestinationLocation?.longitude,
         'rideType': selectedRide,
         'fare': fare,
         'currency': 'PKR',
@@ -4208,53 +4181,36 @@ class _HomeScreenState
           SafeArea(
             child: Column(
               children: [
-                // TOP SECTION
+                // TOP SECTION: white bar with menu, online/offline switch, settings
                 AnimatedSlide(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOutCubic,
-                  offset: isMapInteracting
-                      ? const Offset(0, -1.5)
-                      : Offset.zero,
+                  offset: isMapInteracting ? const Offset(0, -1.5) : Offset.zero,
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 250),
                     opacity: isMapInteracting ? 0.0 : 1.0,
                     child: Padding(
-                      padding:
-                      const EdgeInsets
-                          .all(16),
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              Colors.white,
-                              borderRadius:
-                              BorderRadius
-                                  .circular(
-                                14,
-                              ),
-                              boxShadow:
-                              const [
-                                BoxShadow(
-                                  blurRadius:
-                                  10,
-                                  color: Colors
-                                      .black12,
-                                ),
-                              ],
-                            ),
-                            child:
-                            IconButton(
-                              onPressed:
-                              _showMenu,
-                              icon:
-                              const Icon(
-                                Icons.menu,
-                              ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(28), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 3))]),
+                        child: Row(children: [
+                          Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)), child: IconButton(onPressed: _showMenu, icon: const Icon(Icons.menu_rounded, color: Colors.black87))),
+                          const Spacer(),
+                          if (isDriver) GestureDetector(
+                            onTap: _toggleDriverOnline,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220), width: 112, height: 38, padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(color: driverOnline ? const Color(0xFF0F9D58) : const Color(0xFFE53935), borderRadius: BorderRadius.circular(24)),
+                              child: Stack(children: [
+                                Align(alignment: driverOnline ? Alignment.centerRight : Alignment.centerLeft, child: Container(width: 30, height: 30, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle))),
+                                Center(child: Text(driverOnline ? 'Online' : 'Offline', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13))),
+                              ]),
                             ),
                           ),
-                        ],
+                          const Spacer(),
+                          Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)), child: IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen())), icon: const Icon(Icons.settings_rounded, color: Colors.black87))),
+                        ]),
                       ),
                     ),
                   ),
@@ -4274,74 +4230,6 @@ class _HomeScreenState
                     opacity: isMapInteracting ? 0.0 : 1.0,
                     child: Column(
                       children: [
-                        if (isDriver)
-                          Container(
-                            margin:
-                            const EdgeInsets
-                                .symmetric(
-                              horizontal: 16,
-                            ),
-                            padding:
-                            const EdgeInsets
-                                .symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration:
-                            BoxDecoration(
-                              color:
-                              Colors.white,
-                              borderRadius:
-                              BorderRadius
-                                  .circular(
-                                16,
-                              ),
-                              boxShadow:
-                              const [
-                                BoxShadow(
-                                  blurRadius:
-                                  12,
-                                  color:
-                                  Colors.black12,
-                                ),
-                              ],
-                            ),
-                            child:
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons
-                                      .power_settings_new,
-                                ),
-                                const SizedBox(
-                                  width:
-                                  10,
-                                ),
-                                Expanded(
-                                  child:
-                                  Text(
-                                    driverOnline
-                                        ? 'You are Online'
-                                        : 'You are Offline',
-                                    style:
-                                    const TextStyle(
-                                      fontWeight:
-                                      FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                Switch(
-                                  value:
-                                  driverOnline,
-                                  onChanged:
-                                      (_) {
-                                    _toggleDriverOnline();
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
                         const SizedBox(
                           height: 10,
                         ),
@@ -4978,128 +4866,81 @@ class _HomeScreenState
   }
 
   Widget _realDriverPanelContent(AsyncSnapshot<QuerySnapshot> snapshot) {
+    final rideDocs = (snapshot.data?.docs ?? []).where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return data['status'] == 'searching' &&
+          (data['passengerId'] ?? '').toString().isNotEmpty;
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F7EE),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(13),
               ),
               child: const Icon(
                 Icons.directions_car_rounded,
                 color: Color(0xFF0F9D58),
-                size: 27,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Driver Mode',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  Text(
-                    selectedVehicle == null
-                        ? 'Choose your vehicle'
-                        : selectedVehicle!,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'New Ride Requests',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
             ),
-            TextButton(
-              onPressed: _showDriverVehicleSelection,
-              child: const Text('Change'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 11,
-          ),
-          decoration: BoxDecoration(
-            color: driverOnline
-                ? const Color(0xFFE8F7EE)
-                : const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.circle,
-                size: 11,
-                color: driverOnline
-                    ? const Color(0xFF0F9D58)
-                    : Colors.grey,
-              ),
-              const SizedBox(width: 9),
-              Expanded(
+            if (driverOnline)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F7EE),
+                  borderRadius: BorderRadius.circular(18),
+                ),
                 child: Text(
-                  driverOnline
-                      ? 'You are Online • Waiting for rides'
-                      : 'You are Offline • Go online to receive rides',
+                  '${rideDocs.length} available',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F9D58),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              Switch(
-                value: driverOnline,
-                onChanged: (_) => _toggleDriverOnline(),
-              ),
-            ],
-          ),
+          ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         if (!driverOnline)
           const Expanded(
             child: Center(
               child: Text(
                 'Go Online to receive passenger requests.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),
           )
         else if (snapshot.connectionState == ConnectionState.waiting)
-          const Expanded(
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const Expanded(child: Center(child: CircularProgressIndicator()))
         else if (snapshot.hasError)
-            const Expanded(
-              child: Center(child: Text('Error loading ride requests.')),
-            )
-          else if ((snapshot.data?.docs ?? []).isEmpty)
+            const Expanded(child: Center(child: Text('Error loading ride requests.')))
+          else if (rideDocs.isEmpty)
               const Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.search_rounded, size: 42),
-                      SizedBox(height: 7),
+                      Icon(Icons.search_rounded, size: 34, color: Colors.black45),
+                      SizedBox(height: 5),
                       Text(
                         'No ride requests yet',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -5107,8 +4948,11 @@ class _HomeScreenState
               )
             else
               Expanded(
-                child: _driverRequestCard(
-                  snapshot.data!.docs.first,
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  itemCount: rideDocs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) => _driverRequestCard(rideDocs[index]),
                 ),
               ),
       ],
@@ -5273,55 +5117,357 @@ class _HomeScreenState
     );
   }
 
+  Future<void> _sendRideFareOffer(String rideId, double offeredFare) async {
+    final user = currentUser;
+    if (user == null) {
+      _showMessage('Driver login required.');
+      return;
+    }
+    try {
+      final offer = <String, dynamic>{
+        'driverId': user.uid,
+        'driverName': user.displayName ?? 'Driver',
+        'fare': offeredFare,
+        'status': 'pending',
+        'createdAt': rtdb.ServerValue.timestamp,
+      };
+      await realtimeDatabase.ref('rideRequests/$rideId/offers/${user.uid}').set(offer);
+      await firestore.collection('rides').doc(rideId).set({
+        'driverOffers': {user.uid: {
+          'driverId': user.uid,
+          'driverName': user.displayName ?? 'Driver',
+          'fare': offeredFare,
+          'status': 'pending',
+        }},
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      if (mounted) _showMessage('Fare offer passenger ko send kar di gayi.');
+    } catch (e) {
+      debugPrint('Offer fare error: $e');
+      if (mounted) _showMessage('Fare offer send nahi ho saki. Firebase Rules check karein.');
+    }
+  }
+
+  Future<void> _showRideRequestSheet(QueryDocumentSnapshot ride) async {
+    final data = ride.data() as Map<String, dynamic>;
+    final pickup = (data['pickup'] ?? 'Pickup location').toString();
+    final destination = (data['destination'] ?? 'Destination').toString();
+    final passengerName = (data['passengerName'] ?? 'Passenger').toString();
+    final fareValue = data['fare'] ?? data['offer'] ?? 0;
+    final fare = (fareValue is num ? fareValue.toDouble() : double.tryParse('$fareValue')) ?? 0.0;
+    final pickupLat = (data['pickupLat'] as num?)?.toDouble();
+    final pickupLng = (data['pickupLng'] as num?)?.toDouble();
+    final destinationLat = (data['destinationLat'] as num?)?.toDouble();
+    final destinationLng = (data['destinationLng'] as num?)?.toDouble();
+    final pickupPoint = pickupLat != null && pickupLng != null ? LatLng(pickupLat, pickupLng) : null;
+    final destinationPoint = destinationLat != null && destinationLng != null ? LatLng(destinationLat, destinationLng) : null;
+    final rating = (data['passengerRating'] ?? data['rating'] ?? '').toString();
+    final tripCount = (data['passengerTrips'] ?? data['completedTrips'] ?? '').toString();
+    final rideType = (data['rideType'] ?? 'Ride').toString();
+    final distanceMeters = pickupPoint == null ? null : Geolocator.distanceBetween(
+      currentLocation.latitude, currentLocation.longitude,
+      pickupPoint.latitude, pickupPoint.longitude,
+    );
+    final distanceLabel = distanceMeters == null ? '' : distanceMeters >= 1000
+        ? '~ ${(distanceMeters / 1000).toStringAsFixed(1)} km'
+        : '~ ${distanceMeters.round()} m';
+    final suggestions = <double>{
+      (fare * 1.10).roundToDouble(),
+      (fare * 1.20).roundToDouble(),
+      (fare * 1.30).roundToDouble(),
+    }.toList()..sort();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Container(
+          height: MediaQuery.of(sheetContext).size.height * 0.88,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+                child: Row(children: [
+                  const Expanded(child: Text('Ride request', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
+                  Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(5))),
+                ]),
+              ),
+              SizedBox(
+                height: 230,
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(target: pickupPoint ?? currentLocation, zoom: 12.5),
+                  myLocationEnabled: false,
+                  myLocationButtonEnabled: false,
+                  zoomControlsEnabled: false,
+                  compassEnabled: false,
+                  markers: {
+                    Marker(markerId: const MarkerId('sheet_driver'), position: currentLocation,
+                        infoWindow: const InfoWindow(title: 'Driver location'),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)),
+                    if (pickupPoint != null) Marker(markerId: const MarkerId('sheet_pickup'), position: pickupPoint,
+                        infoWindow: InfoWindow(title: 'A • Pickup', snippet: pickup),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure)),
+                    if (destinationPoint != null) Marker(markerId: const MarkerId('sheet_destination'), position: destinationPoint,
+                        infoWindow: InfoWindow(title: 'B • Destination', snippet: destination),
+                        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen)),
+                  },
+                  polylines: {
+                    if (pickupPoint != null && destinationPoint != null)
+                      Polyline(polylineId: const PolylineId('sheet_route'), points: [pickupPoint, destinationPoint], color: const Color(0xFF0F9D58), width: 5),
+                    if (pickupPoint != null)
+                      Polyline(polylineId: const PolylineId('sheet_driver_to_pickup'), points: [currentLocation, pickupPoint], color: const Color(0xFF1769E0), width: 3),
+                  },
+                  onMapCreated: (controller) {
+                    final points = <LatLng>[currentLocation, if (pickupPoint != null) pickupPoint, if (destinationPoint != null) destinationPoint];
+                    if (points.length > 1) {
+                      var minLat = points.first.latitude, maxLat = points.first.latitude;
+                      var minLng = points.first.longitude, maxLng = points.first.longitude;
+                      for (final point in points.skip(1)) {
+                        if (point.latitude < minLat) minLat = point.latitude;
+                        if (point.latitude > maxLat) maxLat = point.latitude;
+                        if (point.longitude < minLng) minLng = point.longitude;
+                        if (point.longitude > maxLng) maxLng = point.longitude;
+                      }
+                      if (minLat != maxLat || minLng != maxLng) {
+                        controller.animateCamera(CameraUpdate.newLatLngBounds(
+                            LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 35));
+                      }
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (distanceLabel.isNotEmpty)
+                      Text(distanceLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF687780), fontWeight: FontWeight.w500)),
+                    Text('PKR ${fare.toStringAsFixed(fare == fare.roundToDouble() ? 0 : 2)}', style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w800, color: Color(0xFF111820))),
+                    const SizedBox(height: 3),
+                    Row(children: [
+                      const Icon(Icons.person_rounded, size: 19, color: Color(0xFF687780)),
+                      const SizedBox(width: 7),
+                      Expanded(child: Text(passengerName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))),
+                      Text(rideType, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    ]),
+                    if (rating.isNotEmpty || tripCount.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(children: [
+                        if (rating.isNotEmpty) const Icon(Icons.star_rounded, color: Color(0xFFFFB52E), size: 15),
+                        if (rating.isNotEmpty) Text(rating, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                        if (tripCount.isNotEmpty) Text('  ($tripCount trips)', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                      ]),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const CircleAvatar(radius: 10, backgroundColor: Color(0xFF1769E0), child: Text('A', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                      const SizedBox(width: 8), Expanded(child: Text(pickup, style: const TextStyle(fontSize: 14, height: 1.25))),
+                    ]),
+                    const SizedBox(height: 8),
+                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const CircleAvatar(radius: 10, backgroundColor: Color(0xFF0F9D58), child: Text('B', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                      const SizedBox(width: 8), Expanded(child: Text(destination, style: const TextStyle(fontSize: 14, height: 1.25))),
+                    ]),
+                    const SizedBox(height: 10),
+                    SizedBox(width: double.infinity, height: 48, child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.of(sheetContext).pop();
+                        await _acceptRide(ride.id);
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF66D51D), foregroundColor: const Color(0xFF14300A), elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                      child: Text('Accept for PKR ${fare.toStringAsFixed(fare == fare.roundToDouble() ? 0 : 2)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+                    )),
+                    const SizedBox(height: 12),
+                    const Center(child: Text('Offer your fare', style: TextStyle(fontSize: 14, color: Color(0xFF687780), fontWeight: FontWeight.w600))),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 52,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: suggestions.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          if (index == suggestions.length) {
+                            return Material(color: const Color(0xFFF2F5F6), borderRadius: BorderRadius.circular(12), child: IconButton(
+                              tooltip: 'Enter your own fare', icon: const Icon(Icons.edit_rounded),
+                              onPressed: () { Navigator.of(sheetContext).pop(); _showOfferFareDialog(ride.id, fareValue); },
+                            ));
+                          }
+                          final suggestion = suggestions[index];
+                          return OutlinedButton(
+                            onPressed: () async {
+                              Navigator.of(sheetContext).pop();
+                              await _sendRideFareOffer(ride.id, suggestion);
+                            },
+                            style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF27343B), side: const BorderSide(color: Color(0xFFE0E5E8)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                            child: Text('PKR ${suggestion.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          );
+                        },
+                      ),
+                    ),
+                  ]),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: SizedBox(width: double.infinity, height: 42, child: TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('Close', style: TextStyle(fontSize: 15, color: Color(0xFF687780))),
+                )),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _driverRequestCard(QueryDocumentSnapshot ride) {
     final data = ride.data() as Map<String, dynamic>;
+    final pickup = (data['pickup'] ?? 'Pickup location').toString();
+    final destination = (data['destination'] ?? 'Destination').toString();
+    final passengerName = (data['passengerName'] ?? 'Passenger').toString();
+    final fare = data['fare'] ?? data['offer'] ?? 0;
+    // Estimate driver-to-pickup distance for each incoming ride.
+    // Prefer the live driver's current location and the ride's pickup coordinates.
+    final pickupLat = (data['pickupLat'] as num?)?.toDouble();
+    final pickupLng = (data['pickupLng'] as num?)?.toDouble();
+    String distance = '';
+    if (pickupLat != null && pickupLng != null) {
+      final meters = Geolocator.distanceBetween(
+        currentLocation.latitude,
+        currentLocation.longitude,
+        pickupLat,
+        pickupLng,
+      );
+      distance = meters >= 1000
+          ? '${(meters / 1000).toStringAsFixed(1)} km'
+          : '${meters.round()} m';
+    } else {
+      final rawDistance = data['distanceText'] ?? data['distance'];
+      if (rawDistance is num) {
+        distance = rawDistance >= 1000
+            ? '${(rawDistance / 1000).toStringAsFixed(1)} km'
+            : '${rawDistance.round()} m';
+      } else {
+        distance = (rawDistance ?? '').toString().trim();
+      }
+      distance = distance.replaceFirst(RegExp(r'^~\\s*'), '').trim();
+    }
+    final rating = (data['passengerRating'] ?? data['rating'] ?? '').toString();
+    final tripCount = (data['passengerTrips'] ?? data['completedTrips'] ?? '').toString();
+    final timeAgo = (data['timeAgo'] ?? '').toString();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'New Ride Request',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 7),
-        Text(
-          '${data['pickup'] ?? 'Pickup'} → ${data['destination'] ?? 'Destination'}',
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'Offer: Rs. ${data['fare'] ?? 0}',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const Spacer(),
-        SizedBox(
+    return Material(
+      color: Colors.white,
+      child: InkWell(
+        onTap: () => _showRideRequestSheet(ride),
+        child: Container(
           width: double.infinity,
-          height: 48,
-          child: ElevatedButton(
-            onPressed: () => _acceptRide(ride.id),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F9D58),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          padding: const EdgeInsets.fromLTRB(10, 12, 7, 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFE5E8EB), width: 1)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 54,
+                padding: const EdgeInsets.only(top: 2),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8EDF1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFD8E0E5)),
+                      ),
+                      child: const Icon(Icons.person_rounded, color: Color(0xFF788791), size: 31),
+                    ),
+                    const SizedBox(height: 5),
+                    if (rating.isNotEmpty)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.star_rounded, color: Color(0xFFFFB52E), size: 13),
+                          Flexible(
+                            child: Text(rating, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                    if (tripCount.isNotEmpty)
+                      Text('($tripCount)', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                    if (timeAgo.isNotEmpty)
+                      Text(timeAgo, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                  ],
+                ),
               ),
-            ),
-            child: const Text(
-              'Accept Ride',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (distance.isNotEmpty)
+                      Text('~ $distance', maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF687780), fontWeight: FontWeight.w500)),
+                    Text(
+                      'PKR $fare',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 23, height: 1.25, color: Color(0xFF111820), fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(passengerName,
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF687780), fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 5),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.trip_origin, size: 12, color: Color(0xFF657780)),
+                        const SizedBox(width: 5),
+                        Expanded(child: Text(pickup, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13, height: 1.25, color: Color(0xFF27343B)))),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF657780)),
+                        const SizedBox(width: 4),
+                        Expanded(child: Text(destination, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 13, height: 1.25, color: Color(0xFF27343B)))),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+              IconButton(
+                onPressed: () => _showMessage('Ride details'),
+                icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF687780), size: 22),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 25, minHeight: 30),
+                tooltip: 'More options',
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
