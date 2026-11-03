@@ -3538,6 +3538,219 @@ class HomeScreen extends StatefulWidget {
       _HomeScreenState();
 }
 
+class _OfferFareModal extends StatefulWidget {
+  final double baseFare;
+  final Function(String) onShowMessage;
+  const _OfferFareModal({
+    required this.baseFare,
+    required this.onShowMessage,
+  });
+
+  @override
+  State<_OfferFareModal> createState() => _OfferFareModalState();
+}
+
+class _OfferFareModalState extends State<_OfferFareModal> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller =
+        TextEditingController(text: widget.baseFare.toStringAsFixed(0));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _adjustAmount(double delta) {
+    final current = double.tryParse(_controller.text.trim()) ?? widget.baseFare;
+    final updated = (current + delta).clamp(10.0, 100000.0);
+    _controller.text = updated.toStringAsFixed(0);
+    if (mounted) setState(() {});
+  }
+
+  Widget _quickButton(String label, VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF102A25),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0x33B7FF18)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFB7FF18),
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          20,
+          24,
+          MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Name Your Price',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Enter your custom fare offer for this passenger.',
+              style: TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+            const SizedBox(height: 22),
+
+            // Fare Input Field
+            TextField(
+              controller: _controller,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(
+                color: Color(0xFFB7FF18),
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+              ),
+              textAlign: TextAlign.center,
+              cursorColor: const Color(0xFFB7FF18),
+              decoration: InputDecoration(
+                prefixText: '   Rs. ',
+                prefixStyle: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                filled: true,
+                fillColor: const Color(0xFF102A25),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(color: Color(0x559CFF16)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: const BorderSide(color: Color(0x559CFF16)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide:
+                      const BorderSide(color: Color(0xFFB7FF18), width: 2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Quick Adjustment Chips
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _quickButton('-100', () => _adjustAmount(-100)),
+                _quickButton('-50', () => _adjustAmount(-50)),
+                _quickButton('+50', () => _adjustAmount(50)),
+                _quickButton('+100', () => _adjustAmount(100)),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFB7FF18),
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        final value = double.tryParse(_controller.text.trim());
+                        if (value != null && value > 0) {
+                          Navigator.pop(context, value);
+                        } else {
+                          widget.onShowMessage('Please enter a valid fare.');
+                        }
+                      },
+                      child: const Text(
+                        'Send Offer',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HomeScreenState
     extends State<HomeScreen> {
   // Paste your Google Places/Routes web-service API key here on your own computer.
@@ -4278,7 +4491,9 @@ class _HomeScreenState
             onPressed: () {
               Navigator.pop(dialogContext);
               rideNotificationShown = false;
-              _showOfferFareDialog(rideId, fare);
+              Future.microtask(() {
+                if (mounted) _showOfferFareDialog(rideId, fare);
+              });
             },
             child: const Text('Offer Fare'),
           ),
@@ -4300,8 +4515,6 @@ class _HomeScreenState
             ? passengerFare.toDouble()
             : double.tryParse('$passengerFare')) ??
         100.0;
-    final controller =
-        TextEditingController(text: baseFare.toStringAsFixed(0));
 
     final offeredFare = await showModalBottomSheet<double>(
       context: context,
@@ -4310,176 +4523,12 @@ class _HomeScreenState
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setStateModal) {
-            void adjustAmount(double delta) {
-              final current =
-                  double.tryParse(controller.text.trim()) ?? baseFare;
-              final updated = (current + delta).clamp(10.0, 100000.0);
-              controller.text = updated.toStringAsFixed(0);
-              setStateModal(() {});
-            }
-
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  20,
-                  24,
-                  MediaQuery.of(context).viewInsets.bottom + 24,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      'Name Your Price',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Enter your custom fare offer for this passenger.',
-                      style: TextStyle(color: Colors.white60, fontSize: 13),
-                    ),
-                    const SizedBox(height: 22),
-
-                    // Fare Input Field
-                    TextField(
-                      controller: controller,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      style: const TextStyle(
-                        color: Color(0xFFB7FF18),
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                      ),
-                      textAlign: TextAlign.center,
-                      cursorColor: const Color(0xFFB7FF18),
-                      decoration: InputDecoration(
-                        prefixText: 'Rs. ',
-                        prefixStyle: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        filled: true,
-                        fillColor: const Color(0xFF102A25),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide:
-                              const BorderSide(color: Color(0x559CFF16)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide:
-                              const BorderSide(color: Color(0x559CFF16)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFB7FF18), width: 2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Quick Adjustment Chips
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _quickAmountButton('-100', () => adjustAmount(-100)),
-                        _quickAmountButton('-50', () => adjustAmount(-50)),
-                        _quickAmountButton('+50', () => adjustAmount(50)),
-                        _quickAmountButton('+100', () => adjustAmount(100)),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 52,
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: Colors.white24),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: () => Navigator.pop(sheetContext),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: SizedBox(
-                            height: 52,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFB7FF18),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: () {
-                                final value =
-                                    double.tryParse(controller.text.trim());
-                                if (value != null && value > 0) {
-                                  Navigator.pop(sheetContext, value);
-                                } else {
-                                  _showMessage('Please enter a valid fare.');
-                                }
-                              },
-                              child: const Text(
-                                'Send Offer',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (sheetContext) => _OfferFareModal(
+        baseFare: baseFare,
+        onShowMessage: _showMessage,
+      ),
     );
-    controller.dispose();
+
     if (offeredFare == null || currentUser == null) return;
 
     try {
@@ -6804,14 +6853,21 @@ class _HomeScreenState
                           if (index == suggestions.length) {
                             return Material(color: const Color(0xFFF2F5F6), borderRadius: BorderRadius.circular(12), child: IconButton(
                               tooltip: 'Enter your own fare', icon: const Icon(Icons.edit_rounded),
-                              onPressed: () { Navigator.of(sheetContext).pop(); _showOfferFareDialog(ride.id, fareValue); },
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
+                                Future.microtask(() {
+                                  if (mounted) _showOfferFareDialog(ride.id, fareValue);
+                                });
+                              },
                             ));
                           }
                           final suggestion = suggestions[index];
                           return OutlinedButton(
-                            onPressed: () async {
+                            onPressed: () {
                               Navigator.of(sheetContext).pop();
-                              await _sendRideFareOffer(ride.id, suggestion);
+                              Future.microtask(() async {
+                                if (mounted) await _sendRideFareOffer(ride.id, suggestion);
+                              });
                             },
                             style: OutlinedButton.styleFrom(foregroundColor: const Color(0xFF27343B), side: const BorderSide(color: Color(0xFFE0E5E8)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                             child: Text('PKR ${suggestion.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
