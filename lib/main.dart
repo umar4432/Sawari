@@ -3810,7 +3810,7 @@ class _HomeScreenState
   bool passengerSearchExpanded = false;
 
   String selectedRole = 'Passenger';
-  String selectedRide = 'Car';
+  String selectedRide = 'Ride';
 
   String? activeRideId;
 
@@ -4016,15 +4016,17 @@ class _HomeScreenState
         position.longitude,
       );
 
+      _selectedPickupLocation = currentLocation;
+
       if (mounted) {
         setState(() {
-          // Use Google's default blue location dot instead of a custom red marker.
-          // Removing this ID also cleans up any marker left by an older state.
           markers.removeWhere(
                 (marker) => marker.markerId.value == 'my_location',
           );
         });
       }
+
+      await _reverseGeocodeCurrentLocation();
 
       if (mapController != null) {
         await mapController!
@@ -4050,6 +4052,74 @@ class _HomeScreenState
           locationLoading = false;
         });
       }
+    }
+  }
+
+  String _shortenAddress(String address) {
+    if (address.isEmpty) return 'Current Location';
+    final parts = address.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final filtered = parts.where((p) => !RegExp(r'^\d+$').hasMatch(p) && p.toLowerCase() != 'pakistan').toList();
+    if (filtered.length >= 3) {
+      return '${filtered[0]}, ${filtered[1]}, ${filtered[2]}';
+    } else if (filtered.length == 2) {
+      return '${filtered[0]}, ${filtered[1]}';
+    }
+    return parts.isNotEmpty ? parts[0] : 'Current Location';
+  }
+
+  Future<void> _reverseGeocodeCurrentLocation() async {
+    _selectedPickupLocation = currentLocation;
+
+    if (_googleMapsWebServiceApiKey != 'PASTE_YOUR_API_KEY_HERE') {
+      try {
+        final url = Uri.parse(
+          'https://maps.googleapis.com/maps/api/geocode/json?latlng=${currentLocation.latitude},${currentLocation.longitude}&key=$_googleMapsWebServiceApiKey&language=en',
+        );
+        final response = await http.get(url);
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final results = data['results'] as List? ?? [];
+          if (results.isNotEmpty) {
+            final address = results.first['formatted_address']?.toString();
+            if (address != null && address.isNotEmpty) {
+              if (mounted) {
+                setState(() {
+                  pickupController.text = _shortenAddress(address);
+                  _selectedPickupLocation = currentLocation;
+                });
+                return;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Google Geocode error: $e');
+      }
+    }
+
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLocation.latitude}&lon=${currentLocation.longitude}&accept-language=en',
+      );
+      final response = await http.get(url, headers: {
+        'User-Agent': 'SawariApp/1.0',
+        'Accept-Language': 'en',
+      });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final displayName = data['display_name']?.toString();
+        if (displayName != null && displayName.isNotEmpty) {
+          if (mounted) {
+            setState(() {
+              pickupController.text = _shortenAddress(displayName);
+              _selectedPickupLocation = currentLocation;
+            });
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Nominatim Geocode error: $e');
     }
   }
 
@@ -4665,9 +4735,17 @@ class _HomeScreenState
       });
 
       if (!mounted) return;
-      setState(() => activeRideId = rideRef.id);
+      setState(() {
+        activeRideId = rideRef.id;
+        markers.clear();
+        polylines.clear();
+      });
+      if (mapController != null) {
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(currentLocation, 15.5),
+        );
+      }
       _showMessage('Ride request send ho gayi.');
-      _showPassengerStatus(rideRef.id);
     } catch (e) {
       debugPrint('Create ride error: $e');
       _showMessage('Ride request send nahi ho saki. Firebase Rules check karein.');
@@ -5763,9 +5841,9 @@ class _HomeScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _passengerTypeButton('City to City', Icons.route_rounded)),
-              const SizedBox(width: 8),
               Expanded(child: _passengerTypeButton('Ride', Icons.directions_car_filled_rounded)),
+              const SizedBox(width: 8),
+              Expanded(child: _passengerTypeButton('City to City', Icons.route_rounded)),
               const SizedBox(width: 8),
               Expanded(child: _passengerTypeButton('Freight', Icons.local_shipping_rounded)),
             ],
@@ -6073,38 +6151,13 @@ class _HomeScreenState
       final points = _decodeGooglePolyline(encoded);
       if (points.isEmpty) return false;
       setState(() {
-        // Route mode must contain only the pickup and destination custom markers.
-        // Google's default blue location dot is separate from this markers set.
         markers.clear();
-        markers.add(Marker(
-          markerId: const MarkerId('sawari_pickup'),
-          position: origin,
-          icon: _pickupMarkerIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-          infoWindow: InfoWindow(title: 'A • Pickup', snippet: pickupController.text),
-        ));
-        markers.add(Marker(
-          markerId: const MarkerId('sawari_destination'),
-          position: destination,
-          icon: _destinationMarkerIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
-          infoWindow: InfoWindow(title: 'B • Destination', snippet: destinationController.text),
-        ));
-        polylines.removeWhere((line) => line.polylineId.value == 'sawari_route');
-        polylines.add(Polyline(polylineId: const PolylineId('sawari_route'), points: points, color: const Color(0xFFB7FF18), width: 6, geodesic: true));
+        polylines.clear();
       });
-      if (points.length >= 2 && mapController != null) {
-        var minLat = points.first.latitude, maxLat = points.first.latitude;
-        var minLng = points.first.longitude, maxLng = points.first.longitude;
-        for (final point in points.skip(1)) {
-          if (point.latitude < minLat) minLat = point.latitude;
-          if (point.latitude > maxLat) maxLat = point.latitude;
-          if (point.longitude < minLng) minLng = point.longitude;
-          if (point.longitude > maxLng) maxLng = point.longitude;
-        }
-        await mapController!.animateCamera(CameraUpdate.newLatLngBounds(
-          LatLngBounds(southwest: LatLng(minLat, minLng), northeast: LatLng(maxLat, maxLng)), 70,
-        ));
+      if (mapController != null) {
+        await mapController!.animateCamera(
+          CameraUpdate.newLatLngZoom(currentLocation, 15.5),
+        );
       }
       final distanceMeters = (route['distanceMeters'] as num?)?.toDouble();
       final duration = route['duration']?.toString() ?? '';
@@ -6334,45 +6387,11 @@ class _HomeScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F7EE),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: const Icon(
-                Icons.directions_car_rounded,
-                color: Color(0xFF0F9D58),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                'New Ride Requests',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-              ),
-            ),
-            if (driverOnline)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F7EE),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  '${rideDocs.length} available',
-                  style: const TextStyle(
-                    color: Color(0xFF0F9D58),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-          ],
+        const Center(
+          child: Text(
+            'New Ride Requests',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+          ),
         ),
         const SizedBox(height: 10),
         if (!driverOnline)
