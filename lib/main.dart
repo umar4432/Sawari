@@ -642,7 +642,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) =>
-                                const PassengerRegistrationScreen(),
+                            const PassengerRegistrationScreen(),
                           ),
                         ),
                         child: const Text(
@@ -662,11 +662,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: loading
                           ? null
                           : () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const DriverLoginScreen(),
-                                ),
-                              ),
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DriverLoginScreen(),
+                        ),
+                      ),
                       child: const Text(
                         'Driver Portal (Login / Register)',
                         style: TextStyle(
@@ -720,7 +720,7 @@ class _LoginScreenState extends State<LoginScreen> {
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide:
-                const BorderSide(color: Color(0xFF7CA600), width: 1.5)),
+            const BorderSide(color: Color(0xFF7CA600), width: 1.5)),
       ),
     );
   }
@@ -738,13 +738,13 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: onPressed,
         icon: loading
             ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.black,
-                ),
-              )
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.black,
+          ),
+        )
             : Icon(icon),
         label: Text(
           loading ? 'Please wait...' : text,
@@ -1829,7 +1829,7 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
           labelColor: const Color(0xFFB7FF18),
           unselectedLabelColor: Colors.white54,
           labelStyle:
-              const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+          const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
           tabs: const [
             Tab(
               icon: Icon(Icons.person_pin_circle_rounded, size: 20),
@@ -1844,25 +1844,25 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
       ),
       body: user == null
           ? const Center(
-              child: Text(
-                'Please login to view history.',
-                style: TextStyle(color: Colors.white70),
-              ),
-            )
+        child: Text(
+          'Please login to view history.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      )
           : Column(
+        children: [
+          _buildFilterChips(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
               children: [
-                _buildFilterChips(),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildRideList(user.uid, isDriver: false),
-                      _buildRideList(user.uid, isDriver: true),
-                    ],
-                  ),
-                ),
+                _buildRideList(user.uid, isDriver: false),
+                _buildRideList(user.uid, isDriver: true),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2015,8 +2015,8 @@ class _RideHistoryScreenState extends State<RideHistoryScreen>
             Text(
               _selectedFilter == 'All'
                   ? (isDriver
-                      ? 'Rides you accept and complete as a driver will appear here.'
-                      : 'Rides you book as a passenger will appear here.')
+                  ? 'Rides you accept and complete as a driver will appear here.'
+                  : 'Rides you book as a passenger will appear here.')
                   : 'No rides matching the "$_selectedFilter" filter.',
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white54, fontSize: 13),
@@ -2601,8 +2601,8 @@ class _DriverRatingScreenState extends State<DriverRatingScreen> {
               child: saving
                   ? const CircularProgressIndicator(color: Colors.black)
                   : const Text('Submit Feedback',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900, fontSize: 16)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w900, fontSize: 16)),
             ),
           ),
         ],
@@ -3640,7 +3640,7 @@ class _OfferFareModalState extends State<_OfferFareModal> {
             TextField(
               controller: _controller,
               keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(
                 color: Color(0xFFB7FF18),
                 fontSize: 32,
@@ -3669,7 +3669,7 @@ class _OfferFareModalState extends State<_OfferFareModal> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide:
-                      const BorderSide(color: Color(0xFFB7FF18), width: 2),
+                  const BorderSide(color: Color(0xFFB7FF18), width: 2),
                 ),
               ),
             ),
@@ -3918,7 +3918,7 @@ class _HomeScreenState
         .endRecording()
         .toImage(width.toInt(), height.toInt());
     final ByteData? byteData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
+    await image.toByteData(format: ui.ImageByteFormat.png);
 
     if (byteData == null) return BitmapDescriptor.defaultMarker;
     return BitmapDescriptor.bytes(byteData.buffer.asUint8List());
@@ -4016,17 +4016,15 @@ class _HomeScreenState
         position.longitude,
       );
 
-      _selectedPickupLocation = currentLocation;
-
       if (mounted) {
         setState(() {
+          // Use Google's default blue location dot instead of a custom red marker.
+          // Removing this ID also cleans up any marker left by an older state.
           markers.removeWhere(
                 (marker) => marker.markerId.value == 'my_location',
           );
         });
       }
-
-      await _reverseGeocodeCurrentLocation();
 
       if (mapController != null) {
         await mapController!
@@ -4052,74 +4050,6 @@ class _HomeScreenState
           locationLoading = false;
         });
       }
-    }
-  }
-
-  String _shortenAddress(String address) {
-    if (address.isEmpty) return 'Current Location';
-    final parts = address.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-    final filtered = parts.where((p) => !RegExp(r'^\d+$').hasMatch(p) && p.toLowerCase() != 'pakistan').toList();
-    if (filtered.length >= 3) {
-      return '${filtered[0]}, ${filtered[1]}, ${filtered[2]}';
-    } else if (filtered.length == 2) {
-      return '${filtered[0]}, ${filtered[1]}';
-    }
-    return parts.isNotEmpty ? parts[0] : 'Current Location';
-  }
-
-  Future<void> _reverseGeocodeCurrentLocation() async {
-    _selectedPickupLocation = currentLocation;
-
-    if (_googleMapsWebServiceApiKey != 'PASTE_YOUR_API_KEY_HERE') {
-      try {
-        final url = Uri.parse(
-          'https://maps.googleapis.com/maps/api/geocode/json?latlng=${currentLocation.latitude},${currentLocation.longitude}&key=$_googleMapsWebServiceApiKey&language=en',
-        );
-        final response = await http.get(url);
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final results = data['results'] as List? ?? [];
-          if (results.isNotEmpty) {
-            final address = results.first['formatted_address']?.toString();
-            if (address != null && address.isNotEmpty) {
-              if (mounted) {
-                setState(() {
-                  pickupController.text = _shortenAddress(address);
-                  _selectedPickupLocation = currentLocation;
-                });
-                return;
-              }
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Google Geocode error: $e');
-      }
-    }
-
-    try {
-      final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/reverse?format=json&lat=${currentLocation.latitude}&lon=${currentLocation.longitude}&accept-language=en',
-      );
-      final response = await http.get(url, headers: {
-        'User-Agent': 'SawariApp/1.0',
-        'Accept-Language': 'en',
-      });
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final displayName = data['display_name']?.toString();
-        if (displayName != null && displayName.isNotEmpty) {
-          if (mounted) {
-            setState(() {
-              pickupController.text = _shortenAddress(displayName);
-              _selectedPickupLocation = currentLocation;
-            });
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Nominatim Geocode error: $e');
     }
   }
 
@@ -4582,8 +4512,8 @@ class _HomeScreenState
 
   Future<void> _showOfferFareDialog(String rideId, dynamic passengerFare) async {
     final double baseFare = (passengerFare is num
-            ? passengerFare.toDouble()
-            : double.tryParse('$passengerFare')) ??
+        ? passengerFare.toDouble()
+        : double.tryParse('$passengerFare')) ??
         100.0;
 
     final offeredFare = await showModalBottomSheet<double>(
@@ -4746,6 +4676,7 @@ class _HomeScreenState
         );
       }
       _showMessage('Ride request send ho gayi.');
+      _showPassengerStatus(rideRef.id);
     } catch (e) {
       debugPrint('Create ride error: $e');
       _showMessage('Ride request send nahi ho saki. Firebase Rules check karein.');
@@ -4860,7 +4791,7 @@ class _HomeScreenState
 
   void _showRideOnMap(
       LatLng pickup, {
-      LatLng? destination,
+        LatLng? destination,
       }) {
     if (destination != null) {
       _fetchRouteBetween(pickup, destination);
@@ -4873,7 +4804,7 @@ class _HomeScreenState
         ..removeWhere(
               (m) =>
           m.markerId.value == 'ride_pickup' ||
-          m.markerId.value == 'ride_destination',
+              m.markerId.value == 'ride_destination',
         )
         ..add(
           Marker(
@@ -4946,268 +4877,464 @@ class _HomeScreenState
      PASSENGER STATUS
   ============================================================ */
 
-  void _showPassengerStatus(
-      String rideId,
-      ) {
+  void _showPassengerStatus(String rideId) {
     showModalBottomSheet(
       context: context,
       isDismissible: false,
       enableDrag: false,
       isScrollControlled: true,
-      showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (sheetContext) {
-        return StreamBuilder<
-            DocumentSnapshot>(
-          stream: firestore
-              .collection('rides')
-              .doc(rideId)
-              .snapshots(),
-          builder: (
-              context,
-              snapshot,
-              ) {
-            if (!snapshot.hasData) {
-              return const Padding(
-                padding:
-                EdgeInsets.all(30),
-                child: Center(
-                  child:
-                  CircularProgressIndicator(),
-                ),
-              );
-            }
+        double? localFare;
+        double? originalFare;
 
-            final data =
-            snapshot.data!
-                .data()
-            as Map<String, dynamic>?;
+        return StatefulBuilder(
+          builder: (context, setStateModal) {
+            return StreamBuilder<DocumentSnapshot>(
+              stream: firestore.collection('rides').doc(rideId).snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(child: CircularProgressIndicator(color: Color(0xFF0F9D58))),
+                  );
+                }
 
-            if (data == null) {
-              return const Padding(
-                padding:
-                EdgeInsets.all(30),
-                child: Text(
-                  'Ride not found.',
-                ),
-              );
-            }
+                final data = snapshot.data!.data() as Map<String, dynamic>?;
+                if (data == null) {
+                  return const Padding(
+                    padding: EdgeInsets.all(30),
+                    child: Text('Ride not found.'),
+                  );
+                }
 
-            final status =
-                data['status'] ??
-                    'searching';
+                final status = data['status'] ?? 'searching';
+                final driverName = data['driverName'] ?? '';
+                final pickup = data['pickup'] ?? '';
+                final destination = data['destination'] ?? '';
+                final rideType = data['rideType'] ?? 'Private ride';
+                final serverFare = (data['fare'] as num?)?.toDouble() ?? 0.0;
 
-            final driverName =
-                data['driverName'] ??
-                    '';
+                if (originalFare == null) {
+                  originalFare = serverFare;
+                  localFare = serverFare;
+                }
 
-            return SafeArea(
-              child: Padding(
-                padding:
-                const EdgeInsets
-                    .fromLTRB(
-                  24,
-                  10,
-                  24,
-                  30,
-                ),
-                child: Column(
-                  mainAxisSize:
-                  MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons
-                          .local_taxi,
-                      size: 55,
-                    ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Text(
-                      _statusTitle(
-                        status,
-                      ),
-                      style:
-                      const TextStyle(
-                        fontSize: 24,
-                        fontWeight:
-                        FontWeight
-                            .bold,
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 8,
-                    ),
-                    Text(
-                      _statusMessage(
-                        status,
-                      ),
-                      textAlign:
-                      TextAlign.center,
-                    ),
-                    if (driverName
-                        .toString()
-                        .isNotEmpty) ...[
-                      const SizedBox(
-                        height: 18,
-                      ),
-                      Card(
-                        child:
-                        ListTile(
-                          leading:
-                          const CircleAvatar(
-                            child:
-                            Icon(
-                              Icons
-                                  .person,
-                            ),
-                          ),
-                          title:
+                final currentFare = localFare ?? serverFare;
+                final bool hasFareChanged = currentFare != originalFare;
+
+                if (status != 'searching') {
+                  return SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.local_taxi, size: 55, color: Color(0xFF0F9D58)),
+                          const SizedBox(height: 15),
                           Text(
-                            driverName
-                                .toString(),
-                            style:
-                            const TextStyle(
-                              fontWeight:
-                              FontWeight
-                                  .bold,
-                            ),
+                            _statusTitle(status),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                           ),
-                          subtitle:
-                          const Text(
-                            'Your Driver',
+                          const SizedBox(height: 8),
+                          Text(_statusMessage(status), textAlign: TextAlign.center),
+                          if (driverName.toString().isNotEmpty) ...[
+                            const SizedBox(height: 18),
+                            Card(
+                              child: ListTile(
+                                leading: const CircleAvatar(backgroundColor: Color(0xFF0F9D58), child: Icon(Icons.person, color: Colors.white)),
+                                title: Text(driverName.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: const Text('Your Driver'),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          if (status == 'completed' || status == 'cancelled')
+                            SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F9D58), foregroundColor: Colors.white),
+                                onPressed: () {
+                                  _resetRideState();
+                                  Navigator.pop(sheetContext);
+                                },
+                                child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    if (status == 'searching') ...[
-                      const SizedBox(height: 14),
-                      StreamBuilder<DocumentSnapshot>(
-                        stream: firestore.collection('rides').doc(rideId).snapshots(),
-                        builder: (context, offerSnapshot) {
-                          final rideData = offerSnapshot.data?.data() as Map<String, dynamic>?;
-                          final driverOffers = rideData?['driverOffers'] as Map<String, dynamic>? ?? {};
-                          final activeOffers = driverOffers.entries.where((e) {
-                            final map = e.value as Map<String, dynamic>?;
-                            return map?['status'] == 'pending';
-                          }).toList();
-
-                          if (activeOffers.isEmpty) return const SizedBox.shrink();
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Searching for drivers',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          height: 3,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F9D58),
+                            borderRadius: BorderRadius.circular(1.5),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: const [
+                            Icon(Icons.access_time, size: 16, color: Colors.grey),
+                            SizedBox(width: 6),
+                            Text(
+                              'Drivers respond within 5 min',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAF9F0),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF0F9D58).withOpacity(0.3)),
+                          ),
+                          child: Column(
                             children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      if (currentFare > 50) {
+                                        setStateModal(() {
+                                          localFare = currentFare - 100;
+                                        });
+                                      }
+                                    },
+                                    icon: const Icon(Icons.remove_circle_outline, size: 32, color: Color(0xFF0F9D58)),
+                                  ),
+                                  Text(
+                                    'PKR ${currentFare.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      setStateModal(() {
+                                        localFare = currentFare + 100;
+                                      });
+                                    },
+                                    icon: const Icon(Icons.add_circle_outline, size: 32, color: Color(0xFF0F9D58)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
                               const Text(
-                                'Driver Offers',
+                                'Try raising your fare to get offers',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF0F9D58),
+                                  color: Colors.black54,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              ...activeOffers.map((entry) {
-                                final offerMap = Map<String, dynamic>.from(entry.value as Map);
-                                final dName = offerMap['driverName'] ?? 'Driver';
-                                final dFare = offerMap['fare'] ?? 0;
-                                final dId = entry.key;
-                                final dPhone = offerMap['driverPhone'] ?? '';
-
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F4F6),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.grey.shade300),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const CircleAvatar(
-                                        backgroundColor: Color(0xFF0F9D58),
-                                        child: Icon(Icons.person, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              dName,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w900,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              'Offer: Rs. $dFare PKR',
-                                              style: const TextStyle(
-                                                color: Color(0xFF0F9D58),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF0F9D58),
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                        ),
-                                        onPressed: () => _acceptDriverOffer(rideId, dId, dName, dPhone, (dFare is num ? dFare.toDouble() : double.tryParse('$dFare') ?? 0.0)),
-                                        child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
                             ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    if (status ==
-                        'searching')
-                      SizedBox(
-                        width:
-                        double.infinity,
-                        height: 52,
-                        child:
-                        OutlinedButton(
-                          onPressed:
-                              () {
-                            _cancelRide(
-                              rideId,
-                            );
-
-                            Navigator
-                                .pop(
-                              sheetContext,
-                            );
-                          },
-                          child:
-                          const Text(
-                            'Cancel Ride',
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: hasFareChanged ? const Color(0xFF0F9D58) : Colors.grey.shade200,
+                              foregroundColor: hasFareChanged ? Colors.white : Colors.grey.shade500,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: hasFareChanged
+                                ? () async {
+                                    await _updateRideFare(rideId, currentFare);
+                                    setStateModal(() {
+                                      originalFare = currentFare;
+                                    });
+                                  }
+                                : null,
+                            child: const Text(
+                              'Raise fare',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'PKR ${currentFare.toStringAsFixed(0)} for 1 passenger',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.shade100,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                rideType,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.amber.shade900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'Cash',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            const Icon(Icons.radio_button_checked, size: 16, color: Color(0xFF0F9D58)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                pickup,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 7.5),
+                          child: Container(
+                            height: 16,
+                            width: 1.5,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.red),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                destination,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Published now',
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                        const SizedBox(height: 16),
+                        StreamBuilder<DocumentSnapshot>(
+                          stream: firestore.collection('rides').doc(rideId).snapshots(),
+                          builder: (context, offerSnapshot) {
+                            final rideData = offerSnapshot.data?.data() as Map<String, dynamic>?;
+                            final driverOffers = rideData?['driverOffers'] as Map<String, dynamic>? ?? {};
+                            final activeOffers = driverOffers.entries.where((e) {
+                              final map = e.value as Map<String, dynamic>?;
+                              return map?['status'] == 'pending';
+                            }).toList();
+
+                            if (activeOffers.isEmpty) return const SizedBox.shrink();
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Driver Offers',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF0F9D58),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ...activeOffers.map((entry) {
+                                  final offerMap = Map<String, dynamic>.from(entry.value as Map);
+                                  final dName = offerMap['driverName'] ?? 'Driver';
+                                  final dFare = offerMap['fare'] ?? 0;
+                                  final dId = entry.key;
+                                  final dPhone = offerMap['driverPhone'] ?? '';
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.grey.shade300),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const CircleAvatar(
+                                          backgroundColor: Color(0xFF0F9D58),
+                                          child: Icon(Icons.person, color: Colors.white),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                dName,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Offer: Rs. $dFare PKR',
+                                                style: const TextStyle(
+                                                  color: Color(0xFF0F9D58),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF0F9D58),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: () => _acceptDriverOffer(rideId, dId, dName, dPhone, (dFare is num ? dFare.toDouble() : double.tryParse('$dFare') ?? 0.0)),
+                                          child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                                const SizedBox(height: 10),
+                              ],
+                            );
+                          },
+                        ),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade50,
+                              foregroundColor: Colors.red,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            onPressed: () {
+                              _cancelRide(rideId);
+                              _resetRideState();
+                              Navigator.pop(sheetContext);
+                            },
+                            child: const Text(
+                              'Cancel request',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         );
       },
     );
+  }
+
+  Future<void> _updateRideFare(String rideId, double newFare) async {
+    try {
+      await firestore.collection('rides').doc(rideId).update({
+        'fare': newFare,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      try {
+        await realtimeDatabase.ref('rideRequests/$rideId').update({
+          'fare': newFare,
+          'updatedAt': rtdb.ServerValue.timestamp,
+        });
+      } catch (_) {}
+      _showMessage('Fare updated to PKR ${newFare.toInt()}');
+    } catch (e) {
+      debugPrint('Update fare error: $e');
+    }
   }
 
   String _statusTitle(
@@ -5249,6 +5376,24 @@ class _HomeScreenState
   }
 
   /* ============================================================
+     RESET RIDE STATE
+  ============================================================ */
+
+  void _resetRideState() {
+    setState(() {
+      activeRideId = null;
+      pickupController.clear();
+      destinationController.clear();
+      fareController.clear();
+      selectedRide = 'Ride';
+      _selectedPickupLocation = null;
+      _selectedDestinationLocation = null;
+      markers.clear();
+      polylines.clear();
+    });
+  }
+
+  /* ============================================================
      CANCEL
   ============================================================ */
 
@@ -5267,8 +5412,12 @@ class _HomeScreenState
         FieldValue
             .serverTimestamp(),
       });
+      try {
+        await realtimeDatabase.ref('rideRequests/$rideId').remove();
+      } catch (_) {}
+      _showMessage('Ride request cancelled.');
     } catch (e) {
-      debugPrint('$e');
+      debugPrint('Cancel ride error: $e');
     }
   }
 
@@ -6733,7 +6882,7 @@ class _HomeScreenState
                   initialCameraPosition: CameraPosition(target: pickupPoint ?? currentLocation, zoom: 12.5),
                   gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
                     Factory<OneSequenceGestureRecognizer>(
-                      () => EagerGestureRecognizer(),
+                          () => EagerGestureRecognizer(),
                     ),
                   },
                   myLocationEnabled: false,
